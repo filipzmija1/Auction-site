@@ -7,11 +7,18 @@ class Category(models.Model):
     name = models.CharField(max_length=64)
     description = models.TextField()
 
+    def __str__(self):
+        return self.name
+
 
 class Item(models.Model):
     name = models.CharField(max_length=64)
     description = models.TextField()
+    image = models.ImageField(null=True, blank=True, upload_to='images/')
     category = models.ForeignKey(Category, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.name
 
 
 class Auction(models.Model):
