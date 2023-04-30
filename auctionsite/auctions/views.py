@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from django.views.generic import View, ListView, DeleteView
+from django.views.generic import View, ListView, DetailView
 from django.contrib.auth import get_user_model
 
 from .models import Auction, Item
@@ -9,6 +9,7 @@ User = get_user_model()
 
 
 class StartPage(View):
+    """This view shows the start page of the auction house"""
     template_name = 'auctions/base_template.html'
     title = 'Auction house'
     auctions = Auction.objects.count()
@@ -23,6 +24,21 @@ class StartPage(View):
         return render(request, self.template_name, context)
 
 
-class ListItems(ListView):
+class ItemsList(ListView):
+    """Shows a list of all available items"""
     model = Item
 
+
+class ItemDetails(View):
+    """This view shows the details of particural item"""
+    template_name = 'auctions/item_detail.html'
+
+    def get(self, request, *args, **kwargs):
+        pk = kwargs['pk']   # Get the primary key of the item from the URL
+        item = Item.objects.get(pk=pk)
+        return render(request, self.template_name, {'item': item})
+
+
+class AuctionsList(ListView):
+    """Shows a list of all auctions"""
+    model = Auction

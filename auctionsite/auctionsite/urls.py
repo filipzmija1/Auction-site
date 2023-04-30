@@ -24,8 +24,9 @@ import auctions.views as auctions
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('home/', auctions.StartPage.as_view()),
-    path('items/', auctions.ListItems.as_view()),
-
+    path('items/', auctions.ItemsList.as_view()),
+    path('items/<int:pk>', auctions.ItemDetails.as_view()),
+    path('auctions/', auctions.AuctionsList.as_view()),
 ]
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

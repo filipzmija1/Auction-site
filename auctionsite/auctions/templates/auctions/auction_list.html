@@ -1,0 +1,10 @@
+{% extends 'auctions/base_template.html' %}
+{% block title %} Auctions {% endblock %}
+{% block content %}
+<h1>Available auctions</h1>
+{% for auction in auction_list %}
+<ul>
+<a href="/auction/{{ auction.id }}"><li>{{ auction.name }}</li></a>
+</ul>
+{% endfor %}
+{% endblock %}

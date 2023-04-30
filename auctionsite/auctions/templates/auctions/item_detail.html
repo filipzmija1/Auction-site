@@ -1,0 +1,11 @@
+{% extends 'auctions/base_template.html' %}
+{% block title %} {{ object.name }} {% endblock %}
+{% block content %}
+<h1>{{ item.name }}</h1>
+   Name: {{ item.name }} <br>
+   Description: {{ item.description}} <br>
+   Category: {{ item.category }}<br>
+<!--{% if item.image %}-->
+<!--   <img src="{{ item.image.url }}"><br>-->
+<!--{% endif %}-->
+{% endblock %}
