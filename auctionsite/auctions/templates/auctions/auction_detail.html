@@ -2,5 +2,11 @@
 {% block title %} {{ auction.name }} {% endblock %}
 
 {% block content %}
-
+<h1>{{ auction.name }}</h1>
+Item: <a href="/items/{{ auction.item.id }}">{{ auction.item.name }}</a> <br>
+Start price: {{ auction.min_price }} <br>
+{% if auction.buy_now_price %}
+Price without auction: {{ auction.buy_now_price }} <br>
+{% endif %}
+Seller: {{ auction.seller }} <br>
 {% endblock %}
