@@ -42,3 +42,13 @@ class ItemDetails(View):
 class AuctionsList(ListView):
     """Shows a list of all auctions"""
     model = Auction
+
+
+class AuctionDetails(View):
+    """This view shows the details of particural auction"""
+    template_name = 'auctions/auction_detail.html'
+
+    def get(self, request, *args, **kwargs):
+        pk = kwargs['pk']   # Get the primary key of the auction from the URL
+        auction = Auction.objects.get(pk=pk)
+        return render(request, self.template_name, {'auction': auction})

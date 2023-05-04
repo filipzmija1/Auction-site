@@ -27,6 +27,8 @@ urlpatterns = [
     path('items/', auctions.ItemsList.as_view()),
     path('items/<int:pk>', auctions.ItemDetails.as_view()),
     path('auctions/', auctions.AuctionsList.as_view()),
+    path('auction/<int:pk>', auctions.AuctionDetails.as_view()),
+
 ]
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
