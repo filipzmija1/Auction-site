@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from django.views.generic import View, ListView, DetailView
+from django.views.generic import View, ListView, DetailView, CreateView
 from django.contrib.auth import get_user_model
 
 from .models import Auction, Item
@@ -52,3 +52,10 @@ class AuctionDetails(View):
         pk = kwargs['pk']   # Get the primary key of the auction from the URL
         auction = Auction.objects.get(pk=pk)
         return render(request, self.template_name, {'auction': auction})
+
+
+class AddAuction(CreateView):
+    model = Auction
+    fields = ['name', 'item', 'min_price', 'buy_now_price', 'duration', 'seller']
+    template_name = 'auctions/auction_form.html'
+    success_url = '/auctions'

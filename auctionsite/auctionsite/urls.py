@@ -28,6 +28,7 @@ urlpatterns = [
     path('items/<int:pk>', auctions.ItemDetails.as_view()),
     path('auctions/', auctions.AuctionsList.as_view()),
     path('auction/<int:pk>', auctions.AuctionDetails.as_view()),
+    path('add-auction', auctions.AddAuction.as_view()),
 
 ]
 if settings.DEBUG:
