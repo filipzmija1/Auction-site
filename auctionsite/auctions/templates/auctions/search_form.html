@@ -1,0 +1,27 @@
+{% extends 'auctions/base_template.html' %}
+{% block title %} Search {% endblock %}
+
+{% block content %}
+<form action="" method="POST">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <input type="submit" value="Search">
+</form><br>
+{% if messages %}
+{% for message in messages %}
+<b>{{ message }}</b>
+{% endfor %}
+{% endif %}
+{% if item_result %}
+<b>Items: </b><br>
+{% for result in item_result %}
+<a href="/items/{{ result.id }}">{{ result }}</a><br>
+{% endfor %}
+{% endif %}
+{% if auction_result %}
+<b>Auctions: </b><br>
+{% for result in auction_result %}
+<a href="/auction/{{ result.id }}">{{ result }}</a><br>
+{% endfor %}
+{% endif %}
+{% endblock %}

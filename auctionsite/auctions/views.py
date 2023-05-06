@@ -2,10 +2,12 @@ from django.shortcuts import render, redirect
 from django.views.generic import View, ListView, CreateView
 from django.contrib.auth import get_user_model
 from django.contrib import messages
+from django.http import HttpResponseRedirect
+from django.db.models import Q
 
 from .models import Auction, Item, Opinion, Bid
 from .utils import average_rating
-from .forms import BidForm
+from .forms import BidForm, OpinionForm, SearchForm
 
 
 User = get_user_model()
@@ -83,11 +85,25 @@ class AddItem(CreateView):
     success_url = '/items'
 
 
-class AddOpinion(CreateView):
-    model = Opinion
-    fields = ['auction', 'reviewer', 'rating', 'comment']
-    template_name = 'auctions/opinion_form.html'
-    success_url = 'auctions'
+class AddOpinion(View):
+    """View destined to add new opinions about auctions"""
+    def get(self, request, *args, **kwargs):    # Handle GET request to display the opinion form
+        form = OpinionForm()
+        return render(request, 'auctions/opinion_form.html', {'form': form})
+
+    def post(self, request, *args, **kwargs):
+        form = OpinionForm(request.POST)
+        pk = kwargs['pk']
+        auction = Auction.objects.get(pk=pk)
+        if form.is_valid():     # If form is valid create a new Opinion object and redirect to auction detail page
+            reviewer = form.cleaned_data['reviewer']
+            comment = form.cleaned_data['comment']
+            rating = form.cleaned_data['rating']
+            Opinion.objects.create(auction=auction, reviewer=reviewer, rating=rating, comment=comment)
+            messages.success(request, 'Added opinion successfully')
+            return HttpResponseRedirect(f'/auction/{auction.id}')
+        else:   # If form is not valid render the opinion form again with the validation errors
+            return render(request, 'auctions/opinion_form.html', {'form': form})
 
 
 class BidAuction(View):
@@ -119,3 +135,26 @@ class BidAuction(View):
                 Bid.objects.create(amount=new_price, auction=auction, bidder=bidder)
             messages.success(request, 'Bid successfully')  # Display success and redirect to the auction details page
             return redirect(f'/auction/{auction.id}')
+
+
+class SearchAuction(View):
+    def get(self, request, *args, **kwargs):
+        form = SearchForm()
+        return render(request, 'auctions/search_form.html', {'form': form})
+
+    def post(self, request, *args, **kwargs):
+        form = SearchForm(request.POST)
+        context = {
+            'form': form,
+        }
+        if form.is_valid():
+            search = form.cleaned_data['search']
+            item_results = Item.objects.filter(Q(name__icontains=search) | Q(name__startswith=search))
+            auction_result = Auction.objects.filter(Q(name__icontains=search) | Q(name__startswith=search))
+            if not item_results and not auction_result:
+                messages.error(request, 'Didnt match any result')
+                return render(request, 'auctions/search_form.html', context)
+            else:
+                context['item_result'] = item_results
+                context['auction_result'] = auction_result
+                return render(request, 'auctions/search_form.html', context)
