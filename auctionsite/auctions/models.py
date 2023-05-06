@@ -1,3 +1,4 @@
+from django.utils import timezone
 from django.db import models
 from django.contrib.auth.models import User
 from django.core.validators import MinValueValidator, MaxValueValidator
@@ -26,7 +27,7 @@ class Auction(models.Model):
     item = models.ForeignKey(Item, on_delete=models.CASCADE)
     min_price = models.DecimalField(max_digits=10, decimal_places=2)
     buy_now_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-    duration = models.DurationField()
+    end_date = models.DateTimeField()
     seller = models.ForeignKey(User, on_delete=models.CASCADE, related_name='seller')
     buyer = models.ForeignKey(User, on_delete=models.CASCADE, blank=True, related_name='buyer', null=True)
 

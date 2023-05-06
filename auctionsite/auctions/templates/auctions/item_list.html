@@ -5,8 +5,9 @@
 <p><h1>All items:</h1></p>
 {% for item in item_list %}
 <ul>
- <a href="/items/{{ item.id }}">  {{ item.name }}</a>
+ {% if item.image %}<img src="{{ item.image.url }}">{% endif %}
+ <a href="/items/{{ item.id }}">  {{ item.name }}</a><br>
 </ul>
-<!--{% if item.image %}<img src="{{ item.image.url }}">{% endif %}-->
+
 {% endfor %}
 {% endblock %}
