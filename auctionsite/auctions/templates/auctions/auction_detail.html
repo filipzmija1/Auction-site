@@ -8,5 +8,17 @@ Start price: {{ auction.min_price }} <br>
 {% if auction.buy_now_price %}
 Price without auction: {{ auction.buy_now_price }} <br>
 {% endif %}
+End of auction: {{ auction.end_date }}<br>
 Seller: {{ auction.seller }} <br>
+Buyer: {{ auction.buyer }}<br>
+Rating: {{ average_rating }}
+<h2>Opinions:</h2>
+{% for opinion in opinions %}
+<ul>
+    <li>Comment: {{ opinion.comment }}</li>
+    <li>Rating: {{ opinion.rating }}</li>
+    <li>Reviewer: {{ opinion.reviewer }}</li>
+    <li>Date added: {{ opinion.date_created }}</li>
+</ul>
+{% endfor %}
 {% endblock %}

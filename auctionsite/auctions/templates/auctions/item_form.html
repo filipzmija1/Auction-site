@@ -3,6 +3,7 @@
 {% block title %} Add item {% endblock %}
 
 {% block content %}
+<h1>New item</h1>
 <form action="" method="POST">
     {% csrf_token %}
     {{ form.as_p }}

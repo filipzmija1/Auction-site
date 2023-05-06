@@ -5,7 +5,7 @@
    Name: {{ item.name }} <br>
    Description: {{ item.description}} <br>
    Category: {{ item.category }}<br>
-<!--{% if item.image %}-->
-<!--   <img src="{{ item.image.url }}"><br>-->
-<!--{% endif %}-->
+{% if item.image %}
+   <img src="{{ item.image.url }}"><br>
+{% endif %}
 {% endblock %}

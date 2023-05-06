@@ -1,0 +1,12 @@
+{% extends 'auctions/base_template.html' %}
+
+{% block title %} Add opinion {% endblock %}
+
+{% block content %}
+<h1>New opinion</h1>
+<form method="POST" action="">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <input type="submit" value="Add opinion">
+</form>
+{% endblock %}
