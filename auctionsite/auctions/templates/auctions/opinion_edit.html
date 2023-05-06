@@ -1,0 +1,15 @@
+{% extends 'auctions/base_template.html' %}
+{% block title %} Edit opinion {% endblock %}
+
+{% block content %}
+{% if messages %}
+{% for message in messages %}
+{{ message }}
+{% endfor %}
+{% endif %}
+<form action="" method="POST">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <input type="submit" value="Edit opinion">
+</form>
+{% endblock %}

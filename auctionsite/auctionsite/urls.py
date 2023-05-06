@@ -33,6 +33,7 @@ urlpatterns = [
     path('add-opinion/<int:pk>', auctions.AddOpinion.as_view()),
     path('bid-auction/<int:pk>', auctions.BidAuction.as_view()),
     path('search', auctions.SearchAuction.as_view()),
+    path('edit-opinion/<int:pk>', auctions.EditOpinion.as_view()),
 
 ]
 if settings.DEBUG:

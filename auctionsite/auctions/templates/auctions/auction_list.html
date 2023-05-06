@@ -2,6 +2,11 @@
 {% block title %} Auctions {% endblock %}
 {% block content %}
 <h1>Available auctions</h1>
+{% if messages %}
+{% for message in messages %}
+{{ message }}
+{% endfor %}
+{% endif %}
 {% for auction in auction_list %}
 <ul>
 <a href="/auction/{{ auction.id }}"><li>{{ auction.name }}</li></a>

@@ -1,7 +1,8 @@
 from django.shortcuts import render, redirect
-from django.views.generic import View, ListView, CreateView
-from django.contrib.auth import get_user_model
+from django.views.generic import View, ListView, CreateView, UpdateView
+from django.contrib.auth import get_user_model, login, logout, authenticate
 from django.contrib import messages
+from django.contrib.messages.views import SuccessMessageMixin
 from django.http import HttpResponseRedirect
 from django.db.models import Q
 
@@ -87,9 +88,11 @@ class AddItem(CreateView):
 
 class AddOpinion(View):
     """View destined to add new opinions about auctions"""
+    template_name = 'auctions/opinion_form.html'
+
     def get(self, request, *args, **kwargs):    # Handle GET request to display the opinion form
         form = OpinionForm()
-        return render(request, 'auctions/opinion_form.html', {'form': form})
+        return render(request, self.template_name, {'form': form})
 
     def post(self, request, *args, **kwargs):
         form = OpinionForm(request.POST)
@@ -103,20 +106,29 @@ class AddOpinion(View):
             messages.success(request, 'Added opinion successfully')
             return HttpResponseRedirect(f'/auction/{auction.id}')
         else:   # If form is not valid render the opinion form again with the validation errors
-            return render(request, 'auctions/opinion_form.html', {'form': form})
+            return render(request, self.template_name, {'form': form})
+
+
+class EditOpinion(SuccessMessageMixin, UpdateView):
+    model = Opinion
+    fields = ['rating', 'comment']
+    success_message = 'Opinion was updated successfully'
+    template_name = 'auctions/opinion_edit.html'
+    success_url = '/auctions'
 
 
 class BidAuction(View):
     """The view destined to bid on auctions"""
     form = BidForm()
     context = {}
+    template_name = 'auctions/bid_form.html'
 
     def get(self, request, *args, **kwargs):
         pk = kwargs['pk']
         auction = Auction.objects.get(id=pk)
         self.context['auction'] = auction
         self.context['form'] = self.form
-        return render(request, 'auctions/bid_form.html', self.context)
+        return render(request, self.template_name, self.context)
 
     def post(self, request, *args, **kwargs):
         form = BidForm(request.POST)
@@ -127,7 +139,7 @@ class BidAuction(View):
             bidder = form.cleaned_data['bidder']
             if auction.min_price >= new_price:  # Check if new price is bigger than minimum price of the auction
                 messages.error(request, 'New price cannot be less than minimum price')
-                return render(request, 'auctions/bid_form.html', self.context)
+                return render(request, self.template_name, self.context)
             else:
                 auction.min_price = new_price
                 auction.buyer = bidder
@@ -138,9 +150,12 @@ class BidAuction(View):
 
 
 class SearchAuction(View):
+    """This view is destined to search auction or item by name"""
+    template_name = 'auctions/search_form.html'
+
     def get(self, request, *args, **kwargs):
         form = SearchForm()
-        return render(request, 'auctions/search_form.html', {'form': form})
+        return render(request, self.template_name, {'form': form})
 
     def post(self, request, *args, **kwargs):
         form = SearchForm(request.POST)
@@ -148,13 +163,13 @@ class SearchAuction(View):
             'form': form,
         }
         if form.is_valid():
-            search = form.cleaned_data['search']
+            search = form.cleaned_data['search']    # Get search query from form
             item_results = Item.objects.filter(Q(name__icontains=search) | Q(name__startswith=search))
             auction_result = Auction.objects.filter(Q(name__icontains=search) | Q(name__startswith=search))
-            if not item_results and not auction_result:
+            if not item_results and not auction_result:     # If no results found display error message
                 messages.error(request, 'Didnt match any result')
-                return render(request, 'auctions/search_form.html', context)
-            else:
+                return render(request, self.template_name, context)
+            else:   # If results found display them
                 context['item_result'] = item_results
                 context['auction_result'] = auction_result
-                return render(request, 'auctions/search_form.html', context)
+                return render(request, self.template_name, context)

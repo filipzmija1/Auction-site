@@ -48,4 +48,4 @@ class Opinion(models.Model):
     rating = models.PositiveIntegerField(validators=[MinValueValidator(1), MaxValueValidator(10)])
     comment = models.TextField()
     date_created = models.DateTimeField(auto_now_add=True)
-    date_edited = models.DateTimeField(null=True)
+    date_edited = models.DateTimeField(auto_now=True, null=True)
