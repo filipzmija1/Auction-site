@@ -55,7 +55,15 @@ class AuctionDetails(View):
 
 
 class AddAuction(CreateView):
+    """This view creates new auction"""
     model = Auction
-    fields = ['name', 'item', 'min_price', 'buy_now_price', 'duration', 'seller']
+    fields = ['name', 'item', 'min_price', 'buy_now_price', 'end_date', 'seller']
     template_name = 'auctions/auction_form.html'
     success_url = '/auctions'
+
+
+class AddItem(CreateView):
+    model = Item
+    fields = ['name', 'description', 'image', 'category']
+    template_name = 'auctions/item_form.html'
+    success_url = '/items'

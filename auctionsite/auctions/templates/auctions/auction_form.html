@@ -4,8 +4,12 @@
 {% block content %}
 <h1>New auction</h1>
 <form method="POST" action="">
+    {% csrf_token %}
     {{ form.as_p }}
     <input type="submit" value="Add Auction">
-</form>
+</form><br>
+<hr>
+If there is no item in item list --->
+<a href="/add-item"><input type="submit" value="Add item"></a>
 
 {% endblock %}
