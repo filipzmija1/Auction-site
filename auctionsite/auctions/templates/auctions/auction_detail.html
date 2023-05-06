@@ -3,16 +3,24 @@
 
 {% block content %}
 <h1>{{ auction.name }}</h1>
+{% if messages %}
+    {% for message in messages %}
+    <b>{{ message }}</b>
+    {% endfor %}
+<br>
+{% endif %}
 Item: <a href="/items/{{ auction.item.id }}">{{ auction.item.name }}</a> <br>
-Start price: {{ auction.min_price }} <br>
+Price at the moment: {{ auction.min_price }} <br>
 {% if auction.buy_now_price %}
 Price without auction: {{ auction.buy_now_price }} <br>
 {% endif %}
 End of auction: {{ auction.end_date }}<br>
 Seller: {{ auction.seller }} <br>
 Buyer: {{ auction.buyer }}<br>
-Rating: {{ average_rating }}
+Rating: {{ average_rating }} <br><br>
+<a href="/bid-auction/{{ auction.id }}"><b>BID AUCTION</b></a>
 <h2>Opinions:</h2>
+<a href="/add-opinion/{{ auction.id }}"><b>Add opinion</b></a>
 {% for opinion in opinions %}
 <ul>
     <li>Comment: {{ opinion.comment }}</li>

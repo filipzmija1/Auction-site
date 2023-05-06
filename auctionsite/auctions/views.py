@@ -1,9 +1,11 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.views.generic import View, ListView, CreateView
 from django.contrib.auth import get_user_model
+from django.contrib import messages
 
-from .models import Auction, Item, Opinion
+from .models import Auction, Item, Opinion, Bid
 from .utils import average_rating
+from .forms import BidForm
 
 
 User = get_user_model()
@@ -89,4 +91,31 @@ class AddOpinion(CreateView):
 
 
 class BidAuction(View):
-    pass
+    """The view destined to bid on auctions"""
+    form = BidForm()
+    context = {}
+
+    def get(self, request, *args, **kwargs):
+        pk = kwargs['pk']
+        auction = Auction.objects.get(id=pk)
+        self.context['auction'] = auction
+        self.context['form'] = self.form
+        return render(request, 'auctions/bid_form.html', self.context)
+
+    def post(self, request, *args, **kwargs):
+        form = BidForm(request.POST)
+        pk = kwargs['pk']
+        auction = Auction.objects.get(id=pk)
+        if form.is_valid():
+            new_price = form.cleaned_data['amount']
+            bidder = form.cleaned_data['bidder']
+            if auction.min_price >= new_price:  # Check if new price is bigger than minimum price of the auction
+                messages.error(request, 'New price cannot be less than minimum price')
+                return render(request, 'auctions/bid_form.html', self.context)
+            else:
+                auction.min_price = new_price
+                auction.buyer = bidder
+                auction.save()
+                Bid.objects.create(amount=new_price, auction=auction, bidder=bidder)
+            messages.success(request, 'Bid successfully')  # Display success and redirect to the auction details page
+            return redirect(f'/auction/{auction.id}')

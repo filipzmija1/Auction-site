@@ -1,0 +1,27 @@
+{% extends 'auctions/base_template.html' %}
+{% block title %} Bid auction {% endblock %}
+
+{% block content %}
+<h1>Bid auction</h1>
+Item: <a href="/items/{{ auction.item.id }}">{{ auction.item.name }}</a> <br>
+Price at the moment: {{ auction.min_price }} <br>
+{% if auction.buy_now_price %}
+Price without auction: {{ auction.buy_now_price }} <br>
+{% endif %}
+End of auction: {{ auction.end_date }}<br>
+<hr>
+{% if messages %}
+  {% for message in messages %}
+    {{ message }}
+  {% endfor %}
+{% endif %}
+
+<h2>New bid</h2>
+<form action="" method="POST">
+  {% csrf_token %}
+  {{ form.as_p }}
+  <input type="submit" value="Bid auction">
+</form>
+
+
+{% endblock %}
