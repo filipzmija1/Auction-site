@@ -17,3 +17,9 @@ class OpinionForm(forms.ModelForm):
 
 class SearchForm(forms.Form):
     search = forms.CharField(min_length=3, required=False)
+
+
+class LoginForm(forms.Form):
+    username = forms.CharField(max_length=64)
+    password = forms.CharField(widget=forms.PasswordInput)
+

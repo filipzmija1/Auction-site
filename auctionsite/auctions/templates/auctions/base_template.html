@@ -10,6 +10,12 @@
 <a href="/add-auction">Add auction</a> |
 <a href="/add-item">Add item</a> |
 <a href="/search">Search</a> |
+{% if user.is_authenticated %}
+<a href="/logout">Logout</a>
+{{ user.username }}
+{% else %}
+<a href="/login">Login</a>
+{% endif %}
 <hr>
 {% block content %}
 <h1>Welcome to Auction House!</h1>

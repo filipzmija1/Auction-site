@@ -34,6 +34,7 @@ urlpatterns = [
     path('bid-auction/<int:pk>', auctions.BidAuction.as_view()),
     path('search', auctions.SearchAuction.as_view()),
     path('edit-opinion/<int:pk>', auctions.EditOpinion.as_view()),
+    path('login/', auctions.Login.as_view()),
 
 ]
 if settings.DEBUG:

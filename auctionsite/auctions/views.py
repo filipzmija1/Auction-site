@@ -8,7 +8,7 @@ from django.db.models import Q
 
 from .models import Auction, Item, Opinion, Bid
 from .utils import average_rating
-from .forms import BidForm, OpinionForm, SearchForm
+from .forms import BidForm, OpinionForm, SearchForm, LoginForm
 
 
 User = get_user_model()
@@ -110,6 +110,7 @@ class AddOpinion(View):
 
 
 class EditOpinion(SuccessMessageMixin, UpdateView):
+    """This view edits opinion"""
     model = Opinion
     fields = ['rating', 'comment']
     success_message = 'Opinion was updated successfully'
@@ -173,3 +174,24 @@ class SearchAuction(View):
                 context['item_result'] = item_results
                 context['auction_result'] = auction_result
                 return render(request, self.template_name, context)
+
+
+class Login(View):
+    template_name = 'auctions/login_form.html'
+
+    def get(self, request, *args, **kwargs):
+        form = LoginForm()
+        return render(request, self.template_name, {'form': form})
+
+    def post(self, request, *args, **kwargs):
+        form = LoginForm(request.POST)
+        if form.is_valid():
+            username = form.cleaned_data['username']
+            password = form.cleaned_data['password']
+            user = authenticate(username=username, password=password)
+            if user:
+                login(request, user)
+                return redirect('/home')
+            else:
+                form.add_error(None, 'Invalid username or password')
+                return render(request, self.template_name, {'form': form})
