@@ -8,7 +8,7 @@ from django.db.models import Q
 
 from .models import Auction, Item, Opinion, Bid
 from .utils import average_rating
-from .forms import BidForm, OpinionForm, SearchForm, LoginForm
+from .forms import BidForm, OpinionForm, SearchForm, LoginForm, AddUserForm
 
 
 User = get_user_model()
@@ -195,3 +195,18 @@ class Login(View):
             else:
                 form.add_error(None, 'Invalid username or password')
                 return render(request, self.template_name, {'form': form})
+
+
+class Logout(View):
+    def get(self, request, *args, **kwargs):
+        logout(request)
+        return redirect('/home')
+
+
+class AddUser(View):
+    form = AddUserForm()
+    template_name = 'auctions/add_user_form.html'
+
+    def get(self, request, *args, **kwargs):
+        return render(request, self.template_name, {'form': self.form})
+

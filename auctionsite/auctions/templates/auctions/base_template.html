@@ -11,10 +11,11 @@
 <a href="/add-item">Add item</a> |
 <a href="/search">Search</a> |
 {% if user.is_authenticated %}
-<a href="/logout">Logout</a>
-{{ user.username }}
+<a href="/logout">Logout</a> |
+{{ user.username }} |
 {% else %}
-<a href="/login">Login</a>
+<a href="/login">Login</a> |
+<a href="/create-account">Create account</a> |
 {% endif %}
 <hr>
 {% block content %}
