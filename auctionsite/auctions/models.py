@@ -5,7 +5,7 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 
 
 class Category(models.Model):
-    name = models.CharField(max_length=64)
+    name = models.SlugField(max_length=64)
     description = models.TextField()
 
     def __str__(self):

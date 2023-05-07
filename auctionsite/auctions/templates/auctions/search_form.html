@@ -24,4 +24,10 @@
 <a href="/auction/{{ result.id }}">{{ result }}</a><br>
 {% endfor %}
 {% endif %}
+{% if category_result %}
+<b>Categories: </b><br>
+{% for result in category_result %}
+<a href="/category/{{ result.name }}">{{ result }}</a><br>
+{% endfor %}
+{% endif %}
 {% endblock %}

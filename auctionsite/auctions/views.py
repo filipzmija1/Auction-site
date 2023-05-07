@@ -6,7 +6,7 @@ from django.contrib.messages.views import SuccessMessageMixin
 from django.http import HttpResponseRedirect
 from django.db.models import Q
 
-from .models import Auction, Item, Opinion, Bid
+from .models import Auction, Item, Opinion, Bid, Category
 from .utils import average_rating
 from .forms import BidForm, OpinionForm, SearchForm, LoginForm, AddUserForm
 
@@ -68,6 +68,24 @@ class AuctionDetails(View):
             'average_rating': average_rate,
         }
         return render(request, self.template_name, context)
+
+
+class CategoriesList(ListView):
+    """Shows names and descriptions of categories"""
+    model = Category
+
+
+class CategoryDetails(View):
+    """Shows category details include category items"""
+    def get(self, request, *args, **kwargs):
+        slug = kwargs['slug']   # Get category name from URL
+        category = Category.objects.get(name=slug)
+        items = category.item_set.all()
+        context = {
+            'category': category,
+            'items': items
+        }
+        return render(request, 'auctions/category_detail.html', context)
 
 
 class AddAuction(CreateView):
@@ -151,7 +169,7 @@ class BidAuction(View):
 
 
 class SearchAuction(View):
-    """This view is destined to search auction or item by name"""
+    """This view is destined to search auction, category or item by name"""
     template_name = 'auctions/search_form.html'
 
     def get(self, request, *args, **kwargs):
@@ -167,12 +185,14 @@ class SearchAuction(View):
             search = form.cleaned_data['search']    # Get search query from form
             item_results = Item.objects.filter(Q(name__icontains=search) | Q(name__startswith=search))
             auction_result = Auction.objects.filter(Q(name__icontains=search) | Q(name__startswith=search))
-            if not item_results and not auction_result:     # If no results found display error message
-                messages.error(request, 'Didnt match any result')
+            category_result = Category.objects.filter(Q(name__icontains=search) | Q(name__startswith=search))
+            if not item_results and not auction_result and not category_result:
+                messages.error(request, 'Didnt match any result')   # If no results found display error message
                 return render(request, self.template_name, context)
             else:   # If results found display them
                 context['item_result'] = item_results
                 context['auction_result'] = auction_result
+                context['category_result'] = category_result
                 return render(request, self.template_name, context)
 
 

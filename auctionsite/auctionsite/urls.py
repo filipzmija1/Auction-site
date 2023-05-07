@@ -37,6 +37,8 @@ urlpatterns = [
     path('login/', auctions.Login.as_view()),
     path('logout/', auctions.Logout.as_view()),
     path('create-account/', auctions.AddUser.as_view()),
+    path('categories/', auctions.CategoriesList.as_view()),
+    path('category/<slug:slug>', auctions.CategoryDetails.as_view()),
 
 ]
 if settings.DEBUG:

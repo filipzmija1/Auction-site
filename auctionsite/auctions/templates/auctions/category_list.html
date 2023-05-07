@@ -1,0 +1,12 @@
+{% extends 'auctions/base_template.html' %}
+
+{% block title %} Categories {% endblock %}
+
+{% block content %}
+<h1>Categories</h1>
+{% for category in category_list %}
+
+    <ul><a href="/category/{{ category.name }}">{{ category.name }}</a></ul>
+
+{% endfor %}
+{% endblock %}
