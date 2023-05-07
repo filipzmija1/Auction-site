@@ -4,7 +4,7 @@ from django.contrib.auth import get_user_model
 from .models import Bid, Opinion
 
 
-user = get_user_model()
+User = get_user_model()
 
 
 class BidForm(forms.ModelForm):
@@ -33,5 +33,5 @@ class AddUserForm(forms.ModelForm):
     confirm_password = forms.CharField(widget=forms.PasswordInput)
 
     class Meta:
-        model = user
-        fields = ['username', 'password', 'confirm_password', 'first_name', 'last_name', 'email']
+        model = User
+        fields = ['username', 'password', 'confirm_password', 'email']

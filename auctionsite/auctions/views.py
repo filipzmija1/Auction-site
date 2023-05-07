@@ -210,3 +210,28 @@ class AddUser(View):
     def get(self, request, *args, **kwargs):
         return render(request, self.template_name, {'form': self.form})
 
+    def post(self, request, *args, **kwargs):
+        form = AddUserForm(request.POST)
+        users = User.objects.all()
+        usernames = []
+        emails = []
+        for user in users:
+            usernames.append(user.username)
+            emails.append(user.email)
+        if form.is_valid():
+            username = form.cleaned_data['username']
+            confirm_password = form.cleaned_data['confirm_password']
+            password = form.cleaned_data['password']
+            email = form.cleaned_data['email']
+            if username in usernames:
+                form.add_error(None, 'User already exists')
+            elif password != confirm_password:
+                form.add_error(None, 'Passwords do not match')
+            elif email in emails:
+                form.add_error(None, 'Email is already in used')
+            else:
+                User.objects.create_user(username=username, password=password, email=email)
+                messages.success(request, 'You account has been created')
+                return redirect('/home')
+        return render(request, self.template_name, {'form': form})
+

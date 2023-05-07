@@ -20,6 +20,11 @@
 <hr>
 {% block content %}
 <h1>Welcome to Auction House!</h1>
+{% if messages %}
+{% for message in messages %}
+<b>{{ message }}</b><br>
+{% endfor %}
+{% endif %}
 At the moment we got {{ auctions }} auctions and {{ users }} users.
 {% endblock %}
 </body>
