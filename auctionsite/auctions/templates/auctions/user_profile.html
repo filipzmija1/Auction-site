@@ -1,0 +1,19 @@
+{% extends 'auctions/base_template.html' %}
+
+{% block title %}{{ user.username }} {% endblock %}
+
+{% block content %}
+<h1>{{ user.username }}</h1>
+username: {{ user.username }} <br>
+first name: {{ user.first_name }} <br>
+last name: {{ user.last_name }} <br>
+email: {{ user.email }} <br>
+<h2>Bids:</h2>
+{% for bid in bids %}
+<ul>
+<li>Bid: {{ bid.amount }}</li>
+<li>Bid date: {{ bid.time }} </li>
+<li>Auction:<a href="/auction/{{ bid.auction.id }}"> {{ bid.auction }}</a></li>
+</ul>
+{% endfor %}
+{% endblock %}

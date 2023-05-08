@@ -209,9 +209,9 @@ class Login(View):
             username = form.cleaned_data['username']
             password = form.cleaned_data['password']
             user = authenticate(username=username, password=password)
-            if user:
+            if user:    # If user is authenticated log in and redirect to home page
                 login(request, user)
-                return redirect('/home')
+                return redirect(f'/user/{user.username}')
             else:
                 form.add_error(None, 'Invalid username or password')
                 return render(request, self.template_name, {'form': form})
@@ -224,6 +224,7 @@ class Logout(View):
 
 
 class AddUser(View):
+    """View that creates new user"""
     form = AddUserForm()
     template_name = 'auctions/add_user_form.html'
 
@@ -232,10 +233,10 @@ class AddUser(View):
 
     def post(self, request, *args, **kwargs):
         form = AddUserForm(request.POST)
-        users = User.objects.all()
+        users = User.objects.all()  # Retrieve all users data
         usernames = []
         emails = []
-        for user in users:
+        for user in users:  # Getting usernames and emails
             usernames.append(user.username)
             emails.append(user.email)
         if form.is_valid():
@@ -243,15 +244,39 @@ class AddUser(View):
             confirm_password = form.cleaned_data['confirm_password']
             password = form.cleaned_data['password']
             email = form.cleaned_data['email']
-            if username in usernames:
+            first_name = form.cleaned_data['first_name']
+            last_name = form.cleaned_data['last_name']
+            if username in usernames:   # Check if username already exists
                 form.add_error(None, 'User already exists')
             elif password != confirm_password:
                 form.add_error(None, 'Passwords do not match')
-            elif email in emails:
+            elif email in emails:   # Check if email already exists
                 form.add_error(None, 'Email is already in used')
             else:
-                User.objects.create_user(username=username, password=password, email=email)
+                User.objects.create_user(username=username,
+                                         first_name=first_name,
+                                         last_name=last_name,
+                                         password=password,
+                                         email=email)
                 messages.success(request, 'You account has been created')
                 return redirect('/home')
         return render(request, self.template_name, {'form': form})
 
+
+class UserProfile(View):
+    """This view shows user data"""
+    def get(self, request, *args, **kwargs):
+        username = kwargs['username']   # Get user profile from the URL
+        user = User.objects.get(username=username)  # Get user data
+        bids = Bid.objects.filter(bidder=user).order_by('-time')  # Get every users bids
+        context = {
+            'user': user,
+            'bids': bids,
+        }
+        return render(request, 'auctions/user_profile.html', context)
+
+
+class EditUserProfile(UpdateView):
+    """This view edits user profile"""
+    model = User
+    
