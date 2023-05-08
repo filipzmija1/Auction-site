@@ -40,7 +40,8 @@ urlpatterns = [
     path('categories/', auctions.CategoriesList.as_view()),
     path('category/<slug:slug>', auctions.CategoryDetails.as_view()),
     path('user/<str:username>', auctions.UserProfile.as_view()),
-    path('edit-profile/<str:username>', auctions.EditUserProfile.as_view()),
+    path('edit-profile/<int:pk>', auctions.EditUserProfile.as_view()),
+    path('reset-password/<str:username>', auctions.ResetPassword.as_view()),
 
 ]
 if settings.DEBUG:

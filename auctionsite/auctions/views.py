@@ -268,7 +268,7 @@ class UserProfile(View):
     def get(self, request, *args, **kwargs):
         username = kwargs['username']   # Get user profile from the URL
         user = User.objects.get(username=username)  # Get user data
-        bids = Bid.objects.filter(bidder=user).order_by('-time')  # Get every users bids
+        bids = Bid.objects.filter(bidder=user).order_by('-time')  # Get every user bids
         context = {
             'user': user,
             'bids': bids,
@@ -276,9 +276,15 @@ class UserProfile(View):
         return render(request, 'auctions/user_profile.html', context)
 
 
-class EditUserProfile(UpdateView):
+class EditUserProfile(SuccessMessageMixin, UpdateView):
     """This view edits user profile"""
     model = User
     fields = ['first_name', 'last_name', 'email']
     template_name = 'auctions/edit_user_profile.html'
+    success_url = '/home'
+    success_message = 'Account changed'
 
+
+class ResetPassword(View):
+    def get(self, request, *args, **kwargs):
+        pass

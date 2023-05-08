@@ -39,4 +39,5 @@ class AddUserForm(forms.ModelForm):
         fields = ['username', 'password', 'confirm_password', 'email']
 
 
-class EditUserForm(forms.ModelForm):
+class ResetPasswordForm(forms.Form):
+    pass
