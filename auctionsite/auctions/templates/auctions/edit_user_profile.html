@@ -1,0 +1,10 @@
+{% extends 'auctions/base_template.html' %}
+
+{% block title %} Edit profile {% endblock %}
+
+{% block content %}
+<form action="" method="POST">
+    {{ form.as_p }}
+    <input type="submit" value="Change profile">
+</form>
+{% endblock %}

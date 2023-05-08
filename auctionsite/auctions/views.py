@@ -279,4 +279,6 @@ class UserProfile(View):
 class EditUserProfile(UpdateView):
     """This view edits user profile"""
     model = User
-    
+    fields = ['first_name', 'last_name', 'email']
+    template_name = 'auctions/edit_user_profile.html'
+

@@ -3,7 +3,7 @@
 {% block title %}{{ user.username }} {% endblock %}
 
 {% block content %}
-<h1>{{ user.username }}</h1>
+<h1>{{ user.username }}</h1> --> <a href="/edit-profile/{{ user.username }}">Edit profile</a>
 username: {{ user.username }} <br>
 first name: {{ user.first_name }} <br>
 last name: {{ user.last_name }} <br>
