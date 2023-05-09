@@ -224,7 +224,7 @@ class Logout(View):
 
 
 class AddUser(View):
-    """View that creates new user"""
+    """View that creates new user and login after valid form"""
     form = AddUserForm()
     template_name = 'auctions/add_user_form.html'
 
@@ -258,6 +258,8 @@ class AddUser(View):
                                          last_name=last_name,
                                          password=password,
                                          email=email)
+                user = authenticate(username=username, password=password)
+                login(request, user)       # If user is authenticated log in and redirect to home
                 messages.success(request, 'You account has been created')
                 return redirect('/home')
         return render(request, self.template_name, {'form': form})
