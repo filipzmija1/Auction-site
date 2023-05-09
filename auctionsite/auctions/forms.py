@@ -2,7 +2,7 @@ from django import forms
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 
-from .models import Bid, Opinion
+from .models import Bid, Opinion, Auction
 
 
 User = get_user_model()
@@ -43,3 +43,9 @@ class AddUserForm(forms.ModelForm):
 class ResetPasswordForm(forms.Form):
     new_password = forms.CharField(widget=forms.PasswordInput)
     confirm_password = forms.CharField(widget=forms.PasswordInput)
+
+
+class AddAuctionForm(forms.ModelForm):
+    class Meta:
+        model = Auction
+        fields = ['name', 'item', 'min_price', 'buy_now_price', 'end_date']

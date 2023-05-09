@@ -1,14 +1,16 @@
 from django.shortcuts import render, redirect
 from django.views.generic import View, ListView, CreateView, UpdateView
 from django.contrib.auth import get_user_model, login, logout, authenticate
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
 from django.contrib.messages.views import SuccessMessageMixin
 from django.http import HttpResponseRedirect
 from django.db.models import Q
+from django.urls import reverse_lazy
 
 from .models import Auction, Item, Opinion, Bid, Category
 from .utils import average_rating
-from .forms import BidForm, OpinionForm, SearchForm, LoginForm, AddUserForm, ResetPasswordForm
+from .forms import BidForm, OpinionForm, SearchForm, LoginForm, AddUserForm, ResetPasswordForm, AddAuctionForm
 
 
 User = get_user_model()
@@ -88,12 +90,33 @@ class CategoryDetails(View):
         return render(request, 'auctions/category_detail.html', context)
 
 
-class AddAuction(CreateView):
+class AddAuction(LoginRequiredMixin, CreateView):
     """This view creates new auction (prefer to create item before creating auction)"""
-    model = Auction
-    fields = ['name', 'item', 'min_price', 'buy_now_price', 'end_date', 'seller']
+    form = AddAuctionForm()
     template_name = 'auctions/auction_form.html'
-    success_url = '/auctions'
+    login_url = '/login'
+
+    def get(self, request, *args, **kwargs):
+        return render(request, self.template_name, {'form': self.form})
+
+    def post(self, request, *args, **kwargs):
+        form = AddAuctionForm(request.POST)
+        if form.is_valid():
+            name = form.cleaned_data['name']
+            item = form.cleaned_data['item']
+            min_price = form.cleaned_data['min_price']
+            buy_now_price = form.cleaned_data['buy_now_price']
+            end_date = form.cleaned_data['end_date']
+            user = request.user
+            Auction.objects.create(name=name,
+                                   item=item,
+                                   min_price=min_price,
+                                   buy_now_price=buy_now_price,
+                                   end_date=end_date,
+                                   seller=user)
+            return redirect('/auctions')
+        else:
+            return render(request, self.template_name, {'form': self.form})
 
 
 class AddItem(CreateView):
@@ -288,6 +311,7 @@ class EditUserProfile(SuccessMessageMixin, UpdateView):
 
 
 class ResetPassword(View):
+    """Reset logged user password"""
     template_name = 'auctions/reset_password_form.html'
     form = ResetPasswordForm()
 
