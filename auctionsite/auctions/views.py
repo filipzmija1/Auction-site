@@ -8,7 +8,7 @@ from django.db.models import Q
 
 from .models import Auction, Item, Opinion, Bid, Category
 from .utils import average_rating
-from .forms import BidForm, OpinionForm, SearchForm, LoginForm, AddUserForm
+from .forms import BidForm, OpinionForm, SearchForm, LoginForm, AddUserForm, ResetPasswordForm
 
 
 User = get_user_model()
@@ -288,5 +288,23 @@ class EditUserProfile(SuccessMessageMixin, UpdateView):
 
 
 class ResetPassword(View):
+    template_name = 'auctions/reset_password_form.html'
+    form = ResetPasswordForm()
+
     def get(self, request, *args, **kwargs):
-        pass
+        return render(request, self.template_name, {'form': self.form})
+
+    def post(self, request, *args, **kwargs):
+        username = kwargs['username']   # Get user username from the URL
+        user = User.objects.get(username=username)
+        form = ResetPasswordForm(request.POST)
+        if form.is_valid():
+            new_password = form.cleaned_data['new_password']
+            confirm_password = form.cleaned_data['confirm_password']
+            if new_password == confirm_password:
+                user.set_password(new_password)
+                user.save()
+                messages.success(request, 'Password changed successfully')
+                return redirect('/home')
+        messages.error(request, 'Passwords do not match')
+        return render(request, self.template_name, {'form': self.form})
