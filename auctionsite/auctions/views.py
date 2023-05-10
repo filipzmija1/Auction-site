@@ -3,13 +3,15 @@ from django.views.generic import View, ListView, CreateView, UpdateView
 from django.contrib.auth import get_user_model, login, logout, authenticate
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
+from django.core.exceptions import PermissionDenied
 from django.contrib.messages.views import SuccessMessageMixin
 from django.http import HttpResponseRedirect
 from django.db.models import Q
 
 from .models import Auction, Item, Opinion, Bid, Category
 from .utils import average_rating
-from .forms import BidForm, OpinionForm, SearchForm, LoginForm, AddUserForm, ResetPasswordForm, AddAuctionForm
+from .forms import BidForm, OpinionForm, SearchForm, LoginForm, AddUserForm, ResetPasswordForm, AddAuctionForm, \
+    EditUserForm
 
 
 User = get_user_model()
@@ -58,7 +60,7 @@ class AuctionDetails(View):
     def get(self, request, *args, **kwargs):
         pk = kwargs['pk']   # Get the primary key of the auction from the URL
         auction = Auction.objects.get(pk=pk)
-        opinions = auction.opinion_set.all()
+        opinions = auction.opinion_set.all().order_by('-date_created')
         ratings = []
         for opinion in opinions:
             ratings.append(opinion.rating)  # Get every rating from opinion
@@ -130,7 +132,6 @@ class AddOpinion(LoginRequiredMixin, View):
     """View destined to add new opinions about auctions"""
     template_name = 'auctions/opinion_form.html'
     login_url = '/login'
-    LOGIN_REDIRECT_URL = '/add-opinion'
 
     def get(self, request, *args, **kwargs):    # Handle GET request to display the opinion form
         form = OpinionForm()
@@ -237,7 +238,7 @@ class Login(View):
             next_url = request.GET.get('next')  # Get next page from URL
             if user:    # If user is authenticated log in and redirect to home page
                 login(request, user)
-                if next_url:  
+                if next_url:
                     return redirect(next_url)
                 else:
                     return redirect(f'/user/{user.username}')
@@ -307,13 +308,33 @@ class UserProfile(View):
         return render(request, 'auctions/user_profile.html', context)
 
 
-class EditUserProfile(SuccessMessageMixin, UpdateView):
+class EditUserProfile(LoginRequiredMixin, SuccessMessageMixin, View):
     """This view edits user profile"""
-    model = User
-    fields = ['first_name', 'last_name', 'email']
+    login_url = '/login'
     template_name = 'auctions/edit_user_profile.html'
-    success_url = '/home'
-    success_message = 'Account changed'
+
+    def get(self, request, *args, **kwargs):
+        user_id = kwargs['pk']  # Get id from the URL
+        user = request.user
+        form = EditUserForm(instance=user)
+        if user_id != user.id:
+            raise PermissionDenied
+        else:
+            return render(request, self.template_name, {'form': form})
+
+    def post(self, request, *args, **kwargs):
+        form = EditUserForm(request.POST)
+        user = request.user
+        if form.is_valid():
+            first_name = form.cleaned_data['first_name']
+            last_name = form.cleaned_data['last_name']
+            email = form.cleaned_data['email']
+            user.first_name = first_name
+            user.last_name = last_name
+            user.email = email
+            user.save()
+            messages.success(request, 'Account data changed successfully')
+            return redirect(f'/user/{user.username}')
 
 
 class ResetPassword(View):

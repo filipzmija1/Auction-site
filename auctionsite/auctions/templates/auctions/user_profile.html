@@ -4,6 +4,11 @@
 
 {% block content %}
 <h1>{{ user.username }}</h1><a href="/edit-profile/{{ user.id }}"><b>Edit profile</b></a><br>
+{% if messages %}
+{% for message in messages %}
+<b>{{ message }}</b><br>
+{% endfor %}
+{% endif %}
 username: {{ user.username }} <br>
 first name: {{ user.first_name }} <br>
 last name: {{ user.last_name }} <br>

@@ -17,7 +17,7 @@ class BidForm(forms.ModelForm):
 class OpinionForm(forms.ModelForm):
     class Meta:
         model = Opinion
-        fields = ['reviewer', 'rating', 'comment']
+        fields = ['rating', 'comment']
 
 
 class SearchForm(forms.Form):
@@ -49,3 +49,9 @@ class AddAuctionForm(forms.ModelForm):
     class Meta:
         model = Auction
         fields = ['name', 'item', 'min_price', 'buy_now_price', 'end_date']
+
+
+class EditUserForm(forms.ModelForm):
+    class Meta:
+        model = User
+        fields = ['first_name', 'last_name', 'email']
