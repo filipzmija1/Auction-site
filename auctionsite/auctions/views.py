@@ -161,11 +161,12 @@ class EditOpinion(SuccessMessageMixin, UpdateView):
     success_url = '/auctions'
 
 
-class BidAuction(View):
+class BidAuction(LoginRequiredMixin, View):
     """The view destined to bid on auctions"""
     form = BidForm()
     context = {}
     template_name = 'auctions/bid_form.html'
+    login_url = '/login'
 
     def get(self, request, *args, **kwargs):
         pk = kwargs['pk']
@@ -180,7 +181,7 @@ class BidAuction(View):
         auction = Auction.objects.get(id=pk)
         if form.is_valid():
             new_price = form.cleaned_data['amount']
-            bidder = form.cleaned_data['bidder']
+            bidder = request.user
             if auction.min_price >= new_price:  # Check if new price is bigger than minimum price of the auction
                 messages.error(request, 'New price cannot be less than minimum price')
                 return render(request, self.template_name, self.context)
@@ -191,6 +192,19 @@ class BidAuction(View):
                 Bid.objects.create(amount=new_price, auction=auction, bidder=bidder)
             messages.success(request, 'Bid successfully')  # Display success and redirect to the auction details page
             return redirect(f'/auction/{auction.id}')
+
+
+class BidHistory(View):
+    """Shows every bid for auction"""
+    def get(self, request, *args, **kwargs):
+        auction_id = kwargs['pk']  # Get auction id from the URL
+        auction = Auction.objects.get(pk=auction_id)
+        bids = auction.bid_set.all().order_by('-time')
+        context = {
+            'auction': auction,
+            'bids': bids,
+        }
+        return render(request, 'auctions/bid_history_list.html', context)
 
 
 class SearchAuction(View):
@@ -337,25 +351,34 @@ class EditUserProfile(LoginRequiredMixin, SuccessMessageMixin, View):
             return redirect(f'/user/{user.username}')
 
 
-class ResetPassword(View):
+class ResetPassword(LoginRequiredMixin, View):
     """Reset logged user password"""
     template_name = 'auctions/reset_password_form.html'
     form = ResetPasswordForm()
+    login_url = '/login'
 
     def get(self, request, *args, **kwargs):
-        return render(request, self.template_name, {'form': self.form})
+        username = kwargs['username']  # Get user username from the URL
+        user = request.user
+        if user.username != username:
+            raise PermissionDenied
+        else:
+            return render(request, self.template_name, {'form': self.form})
 
     def post(self, request, *args, **kwargs):
         username = kwargs['username']   # Get user username from the URL
-        user = User.objects.get(username=username)
+        user = request.user
         form = ResetPasswordForm(request.POST)
-        if form.is_valid():
-            new_password = form.cleaned_data['new_password']
-            confirm_password = form.cleaned_data['confirm_password']
-            if new_password == confirm_password:
-                user.set_password(new_password)
-                user.save()
-                messages.success(request, 'Password changed successfully')
-                return redirect('/home')
-        messages.error(request, 'Passwords do not match')
-        return render(request, self.template_name, {'form': self.form})
+        if user.username != username:
+            raise PermissionDenied
+        else:
+            if form.is_valid():
+                new_password = form.cleaned_data['new_password']
+                confirm_password = form.cleaned_data['confirm_password']
+                if new_password == confirm_password:
+                    user.set_password(new_password)
+                    user.save()
+                    messages.success(request, 'Password changed successfully')
+                    return redirect('/home')
+            messages.error(request, 'Passwords do not match')
+            return render(request, self.template_name, {'form': self.form})

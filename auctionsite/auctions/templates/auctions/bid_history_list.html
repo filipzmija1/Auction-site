@@ -1,0 +1,17 @@
+{% extends 'auctions/base_template.html' %}
+
+{% block title %}{{ auction.name }} bids {% endblock %}
+
+{% block content %}
+<h1>Bids</h1>
+Auction name: {{ auction.name }} <br>
+Price at the moment: {{ auction.min_price }} <br>
+End of auction: {{ auction.end_date }}<br>
+{% for bid in bids %}
+<ul>
+    <li>{{ bid.amount }} </li>
+    <li>{{ bid.time }}</li>
+    <li>{{ bid.bidder }}</li>
+</ul>
+{% endfor %}
+{% endblock %}

@@ -42,6 +42,7 @@ urlpatterns = [
     path('user/<str:username>', auctions.UserProfile.as_view()),
     path('edit-profile/<int:pk>', auctions.EditUserProfile.as_view()),
     path('reset-password/<str:username>', auctions.ResetPassword.as_view()),
+    path('bids/<int:pk>', auctions.BidHistory.as_view()),
 
 ]
 if settings.DEBUG:

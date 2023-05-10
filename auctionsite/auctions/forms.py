@@ -11,7 +11,7 @@ User = get_user_model()
 class BidForm(forms.ModelForm):
     class Meta:
         model = Bid
-        exclude = ['auction']
+        fields = ['amount']
 
 
 class OpinionForm(forms.ModelForm):

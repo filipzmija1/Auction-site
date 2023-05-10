@@ -18,7 +18,7 @@ End of auction: {{ auction.end_date }}<br>
 Seller: {{ auction.seller }} <br>
 Buyer: {{ auction.buyer }}<br>
 Rating: {{ average_rating }} <br><br>
-<a href="/bid-auction/{{ auction.id }}"><b>BID AUCTION</b></a>
+<a href="/bid-auction/{{ auction.id }}"><b>BID AUCTION</b></a> | <a href="/bids/{{ auction.id }}">BIDS HISTORY</a>
 <h2>Opinions:</h2>
 <a href="/add-opinion/{{ auction.id }}"><b>Add opinion</b></a>
 {% for opinion in opinions %}
