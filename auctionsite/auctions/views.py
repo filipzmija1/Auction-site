@@ -6,7 +6,6 @@ from django.contrib import messages
 from django.contrib.messages.views import SuccessMessageMixin
 from django.http import HttpResponseRedirect
 from django.db.models import Q
-from django.urls import reverse_lazy
 
 from .models import Auction, Item, Opinion, Bid, Category
 from .utils import average_rating
@@ -127,9 +126,11 @@ class AddItem(CreateView):
     success_url = '/items'
 
 
-class AddOpinion(View):
+class AddOpinion(LoginRequiredMixin, View):
     """View destined to add new opinions about auctions"""
     template_name = 'auctions/opinion_form.html'
+    login_url = '/login'
+    LOGIN_REDIRECT_URL = '/add-opinion'
 
     def get(self, request, *args, **kwargs):    # Handle GET request to display the opinion form
         form = OpinionForm()
@@ -140,7 +141,7 @@ class AddOpinion(View):
         pk = kwargs['pk']
         auction = Auction.objects.get(pk=pk)
         if form.is_valid():     # If form is valid create a new Opinion object and redirect to auction detail page
-            reviewer = form.cleaned_data['reviewer']
+            reviewer = request.user
             comment = form.cleaned_data['comment']
             rating = form.cleaned_data['rating']
             Opinion.objects.create(auction=auction, reviewer=reviewer, rating=rating, comment=comment)
@@ -221,6 +222,7 @@ class SearchAuction(View):
 
 class Login(View):
     template_name = 'auctions/login_form.html'
+    login_url = '/login'
 
     def get(self, request, *args, **kwargs):
         form = LoginForm()
@@ -232,9 +234,13 @@ class Login(View):
             username = form.cleaned_data['username']
             password = form.cleaned_data['password']
             user = authenticate(username=username, password=password)
+            next_url = request.GET.get('next')  # Get next page from URL
             if user:    # If user is authenticated log in and redirect to home page
                 login(request, user)
-                return redirect(f'/user/{user.username}')
+                if next_url:  
+                    return redirect(next_url)
+                else:
+                    return redirect(f'/user/{user.username}')
             else:
                 form.add_error(None, 'Invalid username or password')
                 return render(request, self.template_name, {'form': form})
