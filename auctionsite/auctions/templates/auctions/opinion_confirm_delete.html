@@ -1,0 +1,12 @@
+{% extends 'auctions/base_template.html' %}
+
+{% block title %} Confirm delete {% endblock %}
+
+{% block content %}
+<form action="" method="POST">
+    {% csrf_token %}
+    <p>Are you sure you want to delete opinion?</p>
+    {{ form }}
+    <input type="submit" value="Confirm">
+</form>
+{% endblock %}

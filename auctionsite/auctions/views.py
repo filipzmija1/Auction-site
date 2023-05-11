@@ -1,7 +1,7 @@
 from datetime import datetime
 
-from django.shortcuts import render, redirect
-from django.views.generic import View, ListView, CreateView, UpdateView
+from django.shortcuts import render, redirect, get_object_or_404
+from django.views.generic import View, ListView, CreateView, DeleteView
 from django.contrib.auth import get_user_model, login, logout, authenticate
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
@@ -164,10 +164,14 @@ class EditOpinion(LoginRequiredMixin, View):
         opinion = Opinion.objects.get(pk=opinion_id)
         form = EditOpinionForm(instance=opinion)
         user = request.user
+        context = {
+            'form': form,
+            'opinion': opinion
+        }
         if opinion.reviewer.id != user.id:
             raise PermissionDenied
         else:
-            return render(request, self.template_name, {'form': form})
+            return render(request, self.template_name, context)
 
     def post(self, request, *args, **kwargs):
         opinion_id = kwargs['pk']  # Get opinion id from the URL
@@ -182,6 +186,17 @@ class EditOpinion(LoginRequiredMixin, View):
             messages.success(request, 'Opinion changed successfully')
             return redirect(f'/auction/{auction_id}')
 
+
+class DeleteOpinion(SuccessMessageMixin, DeleteView):
+    """This view deletes opinion"""
+    model = Opinion
+    success_message = 'Opinion deleted successfully'
+
+    def get_success_url(self):
+        opinion_id = self.kwargs.get('pk')
+        opinion = Opinion.objects.get(id=opinion_id)
+        auction = opinion.auction
+        return f'/auction/{auction.id}'
 
 class BidAuction(LoginRequiredMixin, View):
     """The view destined to bid on auctions"""
