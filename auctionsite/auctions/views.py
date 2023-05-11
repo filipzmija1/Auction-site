@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from django.shortcuts import render, redirect, get_object_or_404
+from django.shortcuts import render, redirect
 from django.views.generic import View, ListView, CreateView, DeleteView
 from django.contrib.auth import get_user_model, login, logout, authenticate
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -187,16 +187,22 @@ class EditOpinion(LoginRequiredMixin, View):
             return redirect(f'/auction/{auction_id}')
 
 
-class DeleteOpinion(SuccessMessageMixin, DeleteView):
+class DeleteOpinion(LoginRequiredMixin, SuccessMessageMixin, DeleteView):
     """This view deletes opinion"""
     model = Opinion
     success_message = 'Opinion deleted successfully'
+    login_url = '/login'
 
     def get_success_url(self):
+        user = self.request.user
         opinion_id = self.kwargs.get('pk')
         opinion = Opinion.objects.get(id=opinion_id)
         auction = opinion.auction
-        return f'/auction/{auction.id}'
+        if user.id != opinion.reviewer.id:
+            raise PermissionDenied
+        else:
+            return f'/auction/{auction.id}'
+
 
 class BidAuction(LoginRequiredMixin, View):
     """The view destined to bid on auctions"""
