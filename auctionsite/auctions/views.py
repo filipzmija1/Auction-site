@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from django.shortcuts import render, redirect
 from django.views.generic import View, ListView, CreateView, UpdateView
 from django.contrib.auth import get_user_model, login, logout, authenticate
@@ -11,7 +13,7 @@ from django.db.models import Q
 from .models import Auction, Item, Opinion, Bid, Category
 from .utils import average_rating
 from .forms import BidForm, OpinionForm, SearchForm, LoginForm, AddUserForm, ResetPasswordForm, AddAuctionForm, \
-    EditUserForm
+    EditUserForm, EditOpinionForm
 
 
 User = get_user_model()
@@ -152,13 +154,33 @@ class AddOpinion(LoginRequiredMixin, View):
             return render(request, self.template_name, {'form': form})
 
 
-class EditOpinion(SuccessMessageMixin, UpdateView):
+class EditOpinion(LoginRequiredMixin, View):
     """This view edits opinion"""
-    model = Opinion
-    fields = ['rating', 'comment']
-    success_message = 'Opinion was updated successfully'
     template_name = 'auctions/opinion_edit.html'
-    success_url = '/auctions'
+    login_url = '/login'
+
+    def get(self, request, *args, **kwargs):
+        opinion_id = kwargs['pk']   # Get opinion id from the URL
+        opinion = Opinion.objects.get(pk=opinion_id)
+        form = EditOpinionForm(instance=opinion)
+        user = request.user
+        if opinion.reviewer.id != user.id:
+            raise PermissionDenied
+        else:
+            return render(request, self.template_name, {'form': form})
+
+    def post(self, request, *args, **kwargs):
+        opinion_id = kwargs['pk']  # Get opinion id from the URL
+        opinion = Opinion.objects.get(pk=opinion_id)
+        form = EditOpinionForm(request.POST)
+        auction_id = opinion.auction.id
+        if form.is_valid():
+            opinion.rating = form.cleaned_data['rating']
+            opinion.comment = form.cleaned_data['comment']
+            opinion.date_edited = datetime.now()
+            opinion.save()
+            messages.success(request, 'Opinion changed successfully')
+            return redirect(f'/auction/{auction_id}')
 
 
 class BidAuction(LoginRequiredMixin, View):
@@ -191,7 +213,7 @@ class BidAuction(LoginRequiredMixin, View):
                 auction.save()
                 Bid.objects.create(amount=new_price, auction=auction, bidder=bidder)
             messages.success(request, 'Bid successfully')  # Display success and redirect to the auction details page
-            return redirect(f'/auction/{auction.id}')
+            return redirect(f'/bids/{auction.id}')
 
 
 class BidHistory(View):
