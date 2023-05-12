@@ -27,6 +27,9 @@ Rating: {{ average_rating }} <br><br>
     <li>Rating: {{ opinion.rating }}</li>
     <li>Reviewer: {{ opinion.reviewer }}</li>
     <li>Date added: {{ opinion.date_created }}</li>
+    {% if opinion.date_edited %}
+    <li>Date edited: {{ opinion.date_edited }}</li>
+    {% endif %}
     <li><a href="/edit-opinion/{{ opinion.id }}">Edit opinion</a></li>
 </ul>
 {% endfor %}

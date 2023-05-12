@@ -23,6 +23,10 @@ class Item(models.Model):
 
 
 class Auction(models.Model):
+    CHOICES = (
+        ('available', 'available'),
+        ('expired', 'expired'),
+    )
     name = models.CharField(max_length=255)
     item = models.ForeignKey(Item, on_delete=models.CASCADE)
     min_price = models.DecimalField(max_digits=10, decimal_places=2)
@@ -30,6 +34,7 @@ class Auction(models.Model):
     end_date = models.DateTimeField()
     seller = models.ForeignKey(User, on_delete=models.CASCADE, related_name='seller')
     buyer = models.ForeignKey(User, on_delete=models.CASCADE, blank=True, related_name='buyer', null=True)
+    status = models.CharField(choices=CHOICES, default='available', max_length=64)
 
     def __str__(self):
         return self.name

@@ -194,8 +194,9 @@ class DeleteOpinion(LoginRequiredMixin, SuccessMessageMixin, DeleteView):
     login_url = '/login'
 
     def get_success_url(self):
-        user = self.request.user
-        opinion_id = self.kwargs.get('pk')
+        """This method get the success URL from opinion id"""
+        user = self.request.user    # Get logged user
+        opinion_id = self.kwargs.get('pk')  # Get opinion id from the URL
         opinion = Opinion.objects.get(id=opinion_id)
         auction = opinion.auction
         if user.id != opinion.reviewer.id:
@@ -409,19 +410,15 @@ class ResetPassword(LoginRequiredMixin, View):
             return render(request, self.template_name, {'form': self.form})
 
     def post(self, request, *args, **kwargs):
-        username = kwargs['username']   # Get user username from the URL
-        user = request.user
         form = ResetPasswordForm(request.POST)
-        if user.username != username:
-            raise PermissionDenied
-        else:
-            if form.is_valid():
-                new_password = form.cleaned_data['new_password']
-                confirm_password = form.cleaned_data['confirm_password']
-                if new_password == confirm_password:
-                    user.set_password(new_password)
-                    user.save()
-                    messages.success(request, 'Password changed successfully')
-                    return redirect('/home')
-            messages.error(request, 'Passwords do not match')
-            return render(request, self.template_name, {'form': self.form})
+        user = request.user
+        if form.is_valid():
+            new_password = form.cleaned_data['new_password']
+            confirm_password = form.cleaned_data['confirm_password']
+            if new_password == confirm_password:
+                user.set_password(new_password)
+                user.save()
+                messages.success(request, 'Password changed successfully')
+                return redirect('/home')
+        messages.error(request, 'Passwords do not match')
+        return render(request, self.template_name, {'form': self.form})
