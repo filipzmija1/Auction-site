@@ -1,0 +1,14 @@
+{% extends 'auctions/base_template.html' %}
+
+{% block title %} Expired auctions {% endblock %}
+
+{% block content %}
+<h1>Expired auctions</h1>
+{% for auction in auction_list %}
+{% if auction.status == 'expired' %}
+<ul>
+<li><a href="/auction/{{ auctionid }}">{{ auction.name }}</a> <br></li>
+</ul>
+{% endif %}
+{% endfor %}
+{% endblock %}

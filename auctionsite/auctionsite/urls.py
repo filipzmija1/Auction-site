@@ -44,6 +44,7 @@ urlpatterns = [
     path('reset-password/<str:username>', auctions.ResetPassword.as_view()),
     path('bids/<int:pk>', auctions.BidHistory.as_view()),
     path('delete-opinion/<int:pk>', auctions.DeleteOpinion.as_view()),
+    path('expired-auctions/', auctions.AuctionsList.as_view()),
 
 ]
 if settings.DEBUG:

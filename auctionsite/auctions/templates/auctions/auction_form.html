@@ -3,6 +3,11 @@
 
 {% block content %}
 <h1>New auction</h1>
+{% if messages %}
+{% for message in messages %}
+<b>{{ message }}</b>
+{% endfor %}
+{% endif %}
 <form method="POST" action="">
     {% csrf_token %}
     {{ form.as_p }}

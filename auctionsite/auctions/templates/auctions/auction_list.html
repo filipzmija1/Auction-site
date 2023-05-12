@@ -1,15 +1,17 @@
 {% extends 'auctions/base_template.html' %}
 {% block title %} Auctions {% endblock %}
 {% block content %}
-<h1>Available auctions</h1>
+<h1>Auctions</h1>
 {% if messages %}
 {% for message in messages %}
 {{ message }}
 {% endfor %}
 {% endif %}
+<a href="/auctions/?status=available">Show only available auctions</a> |
+<a href="/auctions/?status=expired">Show only expired auctions</a>
 {% for auction in auction_list %}
 <ul>
-<a href="/auction/{{ auction.id }}"><li>{{ auction.name }}</li></a>
+<a href="/auction/{{ auction.id }}"><li>{{ auction.name }}, Status: {{ auction.status }}</li></a>
 </ul>
 {% endfor %}
 {% endblock %}

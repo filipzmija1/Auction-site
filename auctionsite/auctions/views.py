@@ -9,6 +9,7 @@ from django.core.exceptions import PermissionDenied
 from django.contrib.messages.views import SuccessMessageMixin
 from django.http import HttpResponseRedirect
 from django.db.models import Q
+from django.utils import timezone
 
 from .models import Auction, Item, Opinion, Bid, Category
 from .utils import average_rating
@@ -53,6 +54,24 @@ class ItemDetails(View):
 class AuctionsList(ListView):
     """Shows a list of all auctions"""
     model = Auction
+    context_object_name = 'auction_list'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)    # Get default context data
+        for auction in context['auction_list']:
+            if auction.end_date < timezone.now():   # Check if end date is past
+                auction.status = 'expired'
+                auction.save()
+        return context
+
+    def get_template_names(self, **kwargs):
+        status = self.request.GET.get('status')
+        if status == 'expired':
+            return 'auctions/expired_auction_list.html'
+        elif status == 'available':
+            return 'auctions/available_auction_list.html'
+        else:
+            return 'auctions/auction_list.html'
 
 
 class AuctionDetails(View):
@@ -111,13 +130,17 @@ class AddAuction(LoginRequiredMixin, CreateView):
             buy_now_price = form.cleaned_data['buy_now_price']
             end_date = form.cleaned_data['end_date']
             user = request.user
-            Auction.objects.create(name=name,
-                                   item=item,
-                                   min_price=min_price,
-                                   buy_now_price=buy_now_price,
-                                   end_date=end_date,
-                                   seller=user)
-            return redirect('/auctions')
+            if end_date < timezone.now():   # Check if date is not past
+                messages.error(request, 'End date cannot be past')
+                return redirect('/add-auction')
+            else:
+                Auction.objects.create(name=name,
+                                       item=item,
+                                       min_price=min_price,
+                                       buy_now_price=buy_now_price,
+                                       end_date=end_date,
+                                       seller=user)
+                return redirect('/auctions')
         else:
             return render(request, self.template_name, {'form': self.form})
 
