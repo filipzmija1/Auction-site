@@ -7,7 +7,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied
 from django.contrib.messages.views import SuccessMessageMixin
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, Http404
 from django.db.models import Q
 from django.utils import timezone
 from django_email_verification import send_email
@@ -138,6 +138,9 @@ class AddAuction(LoginRequiredMixin, CreateView):
             buy_now_price = form.cleaned_data['buy_now_price']
             end_date = form.cleaned_data['end_date']
             user = request.user
+            if min_price > buy_now_price:
+                messages.error(request, 'Price without bidding cannot be less than minimum price')
+                return redirect('/add-auction')
             if end_date < timezone.now():   # Check if date is not past
                 messages.error(request, 'End date cannot be past')
                 return redirect('/add-auction')
@@ -151,6 +154,41 @@ class AddAuction(LoginRequiredMixin, CreateView):
                 return redirect('/auctions')
         else:
             return render(request, self.template_name, {'form': self.form})
+
+
+class BuyNow(LoginRequiredMixin, View):
+    """This view is used to buy auction item without bidding (only if auction allows that)"""
+    template_name = 'auctions/buy_auction_now.html'
+    login_url = '/login'
+
+    def get(self, request, *args, **kwargs):
+        auction_id = kwargs['pk']
+        auction = Auction.objects.get(id=auction_id)
+        user = request.user
+        if user.id == auction.seller.id:
+            messages.error(request, 'You cannot buy your own auction')
+            return redirect(f'/auction/{auction.id}')
+        if auction.bid_set.count() > 0:
+            messages.error(request, 'You cannot buy right now because someone started to bid on auction'
+                                    ' (you can bid too)')
+            return redirect(f'/auction/{auction.id}')
+        if auction.status == 'available':
+            if not auction.buy_now_price:
+                raise Http404('You can not do this because auction has no price without bid')
+            else:
+                return render(request, self.template_name, {'auction': auction})
+        else:
+            messages.error(request, 'Buy item from expired or sold auction is not allowed')
+            return redirect(f'/auction/{auction.id}')
+
+    def post(self, request, *args, **kwargs):
+        auction_id = kwargs['pk']
+        auction = Auction.objects.get(id=auction_id)
+        auction.status = 'sold'
+        auction.buyer = request.user
+        auction.save()
+        messages.success(request, f'Congratulation! You bought {auction.item.name} from {auction.name}')
+        return redirect('/auctions')
 
 
 class AddItem(CreateView):
@@ -255,13 +293,19 @@ class BidAuction(LoginRequiredMixin, View):
         pk = kwargs['pk']
         auction = Auction.objects.get(id=pk)
         if form.is_valid():
+            if auction.buyer == request.user:
+                messages.error(request, 'You cannot bid because last person who bids is you!')
+                return redirect(f'/auction/{auction.id}')
+            if auction.seller == request.user:
+                messages.error(request, 'You cannot bid on your own auction!')
+                return redirect(f'/auction/{auction.id}')
             if auction.status == 'expired' or auction.status == 'sold':
-                messages.error(request, 'Bid on past auctions is not allowed')
-                return redirect(f'/bids/{auction.id}')
+                messages.error(request, 'Bid on expired or sold auctions is not allowed!')
+                return redirect(f'/auction/{auction.id}')
             new_price = form.cleaned_data['amount']
             bidder = request.user
             if auction.min_price >= new_price:  # Check if new price is bigger than minimum price of the auction
-                messages.error(request, 'New price cannot be less than minimum price')
+                messages.error(request, 'New price cannot be equal or less than minimum price!')
                 return render(request, self.template_name, self.context)
             else:
                 auction.min_price = new_price
@@ -269,7 +313,7 @@ class BidAuction(LoginRequiredMixin, View):
                 auction.save()
                 Bid.objects.create(amount=new_price, auction=auction, bidder=bidder)
             messages.success(request, 'Bid successfully')  # Display success and redirect to the auction details page
-            return redirect(f'/bids/{auction.id}')
+            return redirect(f'/auction/{auction.id}')
 
 
 class BidHistory(View):
@@ -382,7 +426,7 @@ class AddUser(View):
                     password=password,
                     email=email)
                 user.is_active = False
-                send_email(user)
+                send_email(user)    # Send email to verify account
                 messages.success(request, 'Check email to enable your account')
                 return redirect('/home')
         return render(request, self.template_name, {'form': form})

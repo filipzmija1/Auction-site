@@ -47,7 +47,7 @@ urlpatterns = [
     path('delete-opinion/<int:pk>', auctions.DeleteOpinion.as_view()),
     path('expired-auctions/', auctions.AuctionsList.as_view()),
     path('email/', include(mail_urls)),
-
+    path('buy-now/<int:pk>', auctions.BuyNow.as_view()),
 
 ]
 if settings.DEBUG:

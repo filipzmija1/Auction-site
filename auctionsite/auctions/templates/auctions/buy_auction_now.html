@@ -1,0 +1,16 @@
+{% extends 'auctions/base_template.html' %}
+
+{% block title %}Buy now {{ auction.name }} {% endblock %}
+
+{% block content %}
+<h1>Confirm buying</h1>
+
+Are you sure you want to buy <a href="/items/{{ auction.item.id }}">{{ auction.item.name }}</a> from
+<a href="/auction/{{ auction.id }}">{{ auction.name }}</a>? Price is {{ auction.buy_now_price }}. <br><br>
+<form action="" method="POST">
+    {% csrf_token %}
+    <input type="submit" value="BUY NOW">
+</form>
+<br>
+<a href="/auctions">go back to search auctions</a>
+{% endblock %}

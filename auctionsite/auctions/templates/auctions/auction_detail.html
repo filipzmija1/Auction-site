@@ -12,7 +12,7 @@
 Item: <a href="/items/{{ auction.item.id }}">{{ auction.item.name }}</a> <br>
 Price at the moment: {{ auction.min_price }} <br>
 {% if auction.buy_now_price %}
-Price without auction: {{ auction.buy_now_price }} <br>
+Price without bid: {{ auction.buy_now_price }} <a href="/buy-now/{{ auction.id }}">Buy now!</a> <br>
 {% endif %}
 End of auction: {{ auction.end_date }}<br>
 Seller: {{ auction.seller }} <br>
