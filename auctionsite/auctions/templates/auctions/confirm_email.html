@@ -1,0 +1,11 @@
+{% extends 'auctions/base_template.html' %}
+
+{% block title %}Confirm feedback{% endblock %}
+
+{% block content %}
+{% if success %}
+    You have confirmed your account! Now you can <a href="/login">login</a>.
+{% else %}
+    Error, invalid token!
+{% endif %}
+{% endblock %}

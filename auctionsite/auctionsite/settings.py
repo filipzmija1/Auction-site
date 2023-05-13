@@ -39,6 +39,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'auctions.apps.AuctionsConfig',
+    'django_email_verification',
+
 ]
 
 MIDDLEWARE = [
@@ -126,3 +128,34 @@ STATIC_URL = 'static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 MEDIA_URL = '/media/'
+
+# EMAIL VERIFICATION
+
+
+def verified_callback(user):
+    user.is_active = True
+
+
+EMAIL_VERIFIED_CALLBACK = verified_callback
+EMAIL_FROM_ADDRESS = 'testdjangoapp381@gmail.com'
+EMAIL_MAIL_SUBJECT = 'Confirm your email'
+EMAIL_MAIL_HTML = 'auctions/mail_body.html'
+EMAIL_MAIL_PLAIN = 'auctions/mail_body.txt'
+EMAIL_MAIL_TOKEN_LIFE = 14400
+EMAIL_PAGE_TEMPLATE = 'auctions/confirm_email.html'
+EMAIL_PAGE_DOMAIN = 'http://localhost:8000'
+EMAIL_MAIL_PAGE_TEMPLATE = 'auctions/confirm_email.html'
+
+# Django Email Backend
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_HOST_USER = 'testdjangoapp381@gmail.com'
+EMAIL_HOST_PASSWORD = 'vqqz uaql kcvr xdxo'
+EMAIL_USE_TLS = True
+
+
+
+
+
+

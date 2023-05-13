@@ -18,6 +18,7 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from django_email_verification import urls as mail_urls
 
 import auctions.views as auctions
 
@@ -45,6 +46,8 @@ urlpatterns = [
     path('bids/<int:pk>', auctions.BidHistory.as_view()),
     path('delete-opinion/<int:pk>', auctions.DeleteOpinion.as_view()),
     path('expired-auctions/', auctions.AuctionsList.as_view()),
+    path('email/', include(mail_urls)),
+
 
 ]
 if settings.DEBUG:

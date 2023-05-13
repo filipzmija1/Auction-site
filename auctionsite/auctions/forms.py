@@ -34,6 +34,7 @@ class AddUserForm(forms.ModelForm):
     confirm_password = forms.CharField(widget=forms.PasswordInput)
     first_name = forms.CharField(required=False)
     last_name = forms.CharField(required=False)
+    email = forms.EmailField(required=True)
 
     class Meta:
         model = User

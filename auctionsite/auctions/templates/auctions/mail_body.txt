@@ -1,0 +1,2 @@
+Please click the following linkt to confirm your account
+{{ link }}

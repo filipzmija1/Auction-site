@@ -10,6 +10,7 @@ from django.contrib.messages.views import SuccessMessageMixin
 from django.http import HttpResponseRedirect
 from django.db.models import Q
 from django.utils import timezone
+from django_email_verification import send_email
 
 from .models import Auction, Item, Opinion, Bid, Category
 from .utils import average_rating
@@ -57,6 +58,7 @@ class AuctionsList(ListView):
     context_object_name = 'auction_list'
 
     def get_context_data(self, **kwargs):
+        """Method is used to change auction status after expired"""
         context = super().get_context_data(**kwargs)    # Get default context data
         for auction in context['auction_list']:
             if auction.end_date < timezone.now():   # Check if end date is past
@@ -65,7 +67,8 @@ class AuctionsList(ListView):
         return context
 
     def get_template_names(self, **kwargs):
-        status = self.request.GET.get('status')
+        """Method is used to dynamically determine the template to use based on the 'status' parameter in the URL"""
+        status = self.request.GET.get('status')     # Get status parameter from the request
         if status == 'expired':
             return 'auctions/expired_auction_list.html'
         elif status == 'available':
@@ -247,6 +250,9 @@ class BidAuction(LoginRequiredMixin, View):
         pk = kwargs['pk']
         auction = Auction.objects.get(id=pk)
         if form.is_valid():
+            if auction.status == 'expired':
+                messages.error(request, 'Bid on expired auctions is not allowed')
+                return redirect(f'/bids/{auction.id}')
             new_price = form.cleaned_data['amount']
             bidder = request.user
             if auction.min_price >= new_price:  # Check if new price is bigger than minimum price of the auction
@@ -364,14 +370,14 @@ class AddUser(View):
             elif email in emails:   # Check if email already exists
                 form.add_error(None, 'Email is already in used')
             else:
-                User.objects.create_user(username=username,
+                user = User.objects.create_user(username=username,
                                          first_name=first_name,
                                          last_name=last_name,
                                          password=password,
                                          email=email)
-                user = authenticate(username=username, password=password)
-                login(request, user)       # If user is authenticated log in and redirect to home
-                messages.success(request, 'You account has been created')
+                user.is_active = False
+                send_email(user)
+                messages.success(request, 'Check email to enable your account')
                 return redirect('/home')
         return render(request, self.template_name, {'form': form})
 
