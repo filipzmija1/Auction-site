@@ -1,0 +1,14 @@
+{% extends 'auctions/base_template.html' %}
+
+{% block title %} Sold auctions {% endblock %}
+
+{% block content %}
+<h1>Sold auctions</h1>
+{% for auction in auction_list %}
+{% if auction.status == 'sold' %}
+<ul>
+    <li><a href="/auction/{{ auction.id }}">{{ auction.name }}</a></li>
+</ul>
+{% endif %}
+{% endfor %}
+{% endblock %}

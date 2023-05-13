@@ -26,6 +26,7 @@ class Auction(models.Model):
     CHOICES = (
         ('available', 'available'),
         ('expired', 'expired'),
+        ('sold', 'sold'),
     )
     name = models.CharField(max_length=255)
     item = models.ForeignKey(Item, on_delete=models.CASCADE)

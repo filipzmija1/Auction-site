@@ -8,7 +8,8 @@
 {% endfor %}
 {% endif %}
 <a href="/auctions/?status=available">Show only available auctions</a> |
-<a href="/auctions/?status=expired">Show only expired auctions</a>
+<a href="/auctions/?status=expired">Show only expired auctions</a> |
+<a href="/auctions/?status=sold">Show only sold auctions</a>
 {% for auction in auction_list %}
 <ul>
 <a href="/auction/{{ auction.id }}"><li>{{ auction.name }}, Status: {{ auction.status }}</li></a>

@@ -58,10 +58,13 @@ class AuctionsList(ListView):
     context_object_name = 'auction_list'
 
     def get_context_data(self, **kwargs):
-        """Method is used to change auction status after expired"""
+        """Method is used to change auction status after expired or sold"""
         context = super().get_context_data(**kwargs)    # Get default context data
         for auction in context['auction_list']:
-            if auction.end_date < timezone.now():   # Check if end date is past
+            if auction.end_date < timezone.now() and auction.bid_set.count() > 0:
+                auction.status = 'sold'
+                auction.save()
+            elif auction.end_date < timezone.now():   # Check if end date is past
                 auction.status = 'expired'
                 auction.save()
         return context
@@ -73,6 +76,8 @@ class AuctionsList(ListView):
             return 'auctions/expired_auction_list.html'
         elif status == 'available':
             return 'auctions/available_auction_list.html'
+        elif status == 'sold':
+            return 'auctions/sold_auction_list.html'
         else:
             return 'auctions/auction_list.html'
 
@@ -250,8 +255,8 @@ class BidAuction(LoginRequiredMixin, View):
         pk = kwargs['pk']
         auction = Auction.objects.get(id=pk)
         if form.is_valid():
-            if auction.status == 'expired':
-                messages.error(request, 'Bid on expired auctions is not allowed')
+            if auction.status == 'expired' or auction.status == 'sold':
+                messages.error(request, 'Bid on past auctions is not allowed')
                 return redirect(f'/bids/{auction.id}')
             new_price = form.cleaned_data['amount']
             bidder = request.user
@@ -370,11 +375,12 @@ class AddUser(View):
             elif email in emails:   # Check if email already exists
                 form.add_error(None, 'Email is already in used')
             else:
-                user = User.objects.create_user(username=username,
-                                         first_name=first_name,
-                                         last_name=last_name,
-                                         password=password,
-                                         email=email)
+                user = User.objects.create_user(
+                    username=username,
+                    first_name=first_name,
+                    last_name=last_name,
+                    password=password,
+                    email=email)
                 user.is_active = False
                 send_email(user)
                 messages.success(request, 'Check email to enable your account')
@@ -415,10 +421,8 @@ class EditUserProfile(LoginRequiredMixin, SuccessMessageMixin, View):
         if form.is_valid():
             first_name = form.cleaned_data['first_name']
             last_name = form.cleaned_data['last_name']
-            email = form.cleaned_data['email']
             user.first_name = first_name
             user.last_name = last_name
-            user.email = email
             user.save()
             messages.success(request, 'Account data changed successfully')
             return redirect(f'/user/{user.username}')
