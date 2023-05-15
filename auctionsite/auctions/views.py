@@ -138,9 +138,10 @@ class AddAuction(LoginRequiredMixin, CreateView):
             buy_now_price = form.cleaned_data['buy_now_price']
             end_date = form.cleaned_data['end_date']
             user = request.user
-            if min_price > buy_now_price:
-                messages.error(request, 'Price without bidding cannot be less than minimum price')
-                return redirect('/add-auction')
+            if buy_now_price:
+                if min_price > buy_now_price:
+                    messages.error(request, 'Price without bidding cannot be less than minimum price')
+                    return redirect('/add-auction')
             if end_date < timezone.now():   # Check if date is not past
                 messages.error(request, 'End date cannot be past')
                 return redirect('/add-auction')
@@ -169,7 +170,7 @@ class BuyNow(LoginRequiredMixin, View):
             messages.error(request, 'You cannot buy your own auction')
             return redirect(f'/auction/{auction.id}')
         if auction.bid_set.count() > 0:
-            messages.error(request, 'You cannot buy right now because someone started to bid on auction'
+            messages.error(request, 'You cannot buy right now because someone started to bid on auction already'
                                     ' (you can bid too)')
             return redirect(f'/auction/{auction.id}')
         if auction.status == 'available':
