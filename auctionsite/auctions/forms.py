@@ -50,6 +50,7 @@ class AddAuctionForm(forms.ModelForm):
     class Meta:
         model = Auction
         fields = ['name', 'item', 'min_price', 'buy_now_price', 'end_date']
+    end_date = forms.DateTimeField(widget=forms.TextInput(attrs={'placeholder': '01/20/1995 15:30:00'}))
 
 
 class EditUserForm(forms.ModelForm):

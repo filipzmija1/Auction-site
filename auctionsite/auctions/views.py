@@ -169,7 +169,7 @@ class BuyNow(LoginRequiredMixin, View):
         if user.id == auction.seller.id:
             messages.error(request, 'You cannot buy your own auction')
             return redirect(f'/auction/{auction.id}')
-        if auction.bid_set.count() > 0:
+        if auction.bid_set.count() > 0: # Check if someone started bidding auction
             messages.error(request, 'You cannot buy right now because someone started to bid on auction already'
                                     ' (you can bid too)')
             return redirect(f'/auction/{auction.id}')
@@ -276,7 +276,8 @@ class DeleteOpinion(LoginRequiredMixin, SuccessMessageMixin, DeleteView):
 
 
 class BidAuction(LoginRequiredMixin, View):
-    """The view destined to bid on auctions"""
+    """The view destined to bid on auctions (if bid is 20 minutes before end of auction,
+      it increases end of auction time for 20 minutes)"""
     form = BidForm()
     context = {}
     template_name = 'auctions/bid_form.html'
@@ -309,6 +310,8 @@ class BidAuction(LoginRequiredMixin, View):
                 messages.error(request, 'New price cannot be equal or less than minimum price!')
                 return render(request, self.template_name, self.context)
             else:
+                if timezone.now() + timezone.timedelta(minutes=20) > auction.end_date:
+                    auction.end_date += timezone.timedelta(minutes=20)
                 auction.min_price = new_price
                 auction.buyer = bidder
                 auction.save()
