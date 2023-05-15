@@ -503,3 +503,19 @@ class ResetPassword(LoginRequiredMixin, View):
                 return redirect('/home')
         messages.error(request, 'Passwords do not match')
         return render(request, self.template_name, {'form': self.form})
+
+
+class DeleteUser(LoginRequiredMixin, SuccessMessageMixin, DeleteView):
+    """This view allows user to delete his own profile"""
+    model = User
+    login_url = '/login'
+    success_message = 'Your account has been deleted successfully'
+    template_name = 'auctions/user_confirm_delete.html'
+    
+    def get_success_url(self):
+        user = self.request.user    # Get logged user
+        user_id = self.kwargs.get('pk') # Get user id from the URL
+        if user.id != user_id:
+            raise PermissionDenied
+        else:
+            return '/home'

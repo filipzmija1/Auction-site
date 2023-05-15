@@ -8,5 +8,6 @@
     {{ form.as_p }}
     <input type="submit" value="Change profile">
 </form><br>
-<a href="/reset-password/{{ user.username }}">Reset password</a>
+<a href="/reset-password/{{ user.username }}">Reset password</a><br><br>
+<a href="/delete-user/{{ user.id }}">Delete account</a>
 {% endblock %}

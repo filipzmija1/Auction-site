@@ -48,7 +48,8 @@ urlpatterns = [
     path('expired-auctions/', auctions.AuctionsList.as_view()),
     path('email/', include(mail_urls)),
     path('buy-now/<int:pk>', auctions.BuyNow.as_view()),
-
+    path('delete-user/<int:pk>', auctions.DeleteUser.as_view()),
+    
 ]
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
