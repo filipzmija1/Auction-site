@@ -19,6 +19,7 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from django_email_verification import urls as mail_urls
+from django.contrib.auth import views as auth_views
 
 import auctions.views as auctions
 
@@ -49,7 +50,22 @@ urlpatterns = [
     path('email/', include(mail_urls)),
     path('buy-now/<int:pk>', auctions.BuyNow.as_view()),
     path('delete-user/<int:pk>', auctions.DeleteUser.as_view()),
-    
+    path('reset_password/', auth_views.PasswordResetView.as_view(
+    template_name='auctions/accounts/password_reset.html')
+         , name='reset_password'),
+
+    path('reset/<uidb64>/<token>', auth_views.PasswordResetConfirmView.as_view(
+    template_name='auctions/accounts/password_reset_form.html'),
+          name='password_reset_confirm'),
+
+    path('reset_password_sent/', auth_views.PasswordResetDoneView.as_view(
+    template_name='auctions/accounts/password_reset_send.html')
+         , name='password_reset_done'),
+
+    path('reset_password_complete/', auth_views.PasswordResetCompleteView.as_view(
+    template_name='auctions/accounts/password_reset_done.html'),
+          name='password_reset_complete'),
+          
 ]
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
