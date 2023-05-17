@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     'crispy_forms',
     'babel',
     'phonenumber_field',
+    'rest_framework'
 
 ]
 

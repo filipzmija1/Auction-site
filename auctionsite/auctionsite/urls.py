@@ -20,8 +20,14 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django_email_verification import urls as mail_urls
 from django.contrib.auth import views as auth_views
+from rest_framework.routers import DefaultRouter
 
 import auctions.views as auctions
+import auctions.api_views as api_views
+
+
+router = DefaultRouter()
+router.register('users', api_views.UserView)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -67,7 +73,10 @@ urlpatterns = [
           name='password_reset_complete'),
 
     path('accounts/', include('allauth.urls')),
-          
+    path('api/', api_views.AuctionView.as_view()),
+    path('api/<int:pk>', api_views.AuctionDetailView.as_view()),
+    path('api/', include((router.urls, 'api'))),
+
 ]
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
