@@ -50,6 +50,7 @@ urlpatterns = [
     path('email/', include(mail_urls)),
     path('buy-now/<int:pk>', auctions.BuyNow.as_view()),
     path('delete-user/<int:pk>', auctions.DeleteUser.as_view()),
+    
     path('reset_password/', auth_views.PasswordResetView.as_view(
     template_name='auctions/accounts/password_reset.html')
          , name='reset_password'),
@@ -65,6 +66,8 @@ urlpatterns = [
     path('reset_password_complete/', auth_views.PasswordResetCompleteView.as_view(
     template_name='auctions/accounts/password_reset_done.html'),
           name='password_reset_complete'),
+
+    path('accounts/', include('allauth.urls')),
           
 ]
 if settings.DEBUG:
