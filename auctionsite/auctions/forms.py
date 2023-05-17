@@ -1,8 +1,6 @@
 from django import forms
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
-from phonenumber_field.widgets import PhoneNumberPrefixWidget
-from phonenumber_field.modelfields import PhoneNumberField
 
 from .models import Bid, Opinion, Auction
 
@@ -34,8 +32,6 @@ class LoginForm(forms.Form):
 class AddUserForm(forms.ModelForm):
     password = forms.CharField(widget=forms.PasswordInput)
     confirm_password = forms.CharField(widget=forms.PasswordInput)
-    first_name = forms.CharField(required=False)
-    last_name = forms.CharField(required=False)
     email = forms.EmailField(required=True)
 
     class Meta:
@@ -60,8 +56,19 @@ class AddAuctionForm(forms.ModelForm):
 class EditUserForm(forms.Form):
     first_name = forms.CharField(max_length=150, required=False)
     last_name = forms.CharField(max_length=150, required=False)
-    phone_number = forms.CharField(widget=PhoneNumberPrefixWidget(), required=False)
+    phone_number = forms.CharField(required=False, help_text='This field is used to receive SMS when you will be outbid')
 
+    def clean_phone_number(self, *args, **kwargs):
+        phone_number = self.cleaned_data.get('phone_number')
+        for number in phone_number:
+            try:
+                int(number)
+            except:
+                raise forms.ValidationError('Phone number must contains only numbers!')
+        if len(phone_number) != 9:
+            raise forms.ValidationError('Phone number must have 9 numbers')
+        else:
+            return phone_number
 
 class EditOpinionForm(forms.ModelForm):
     class Meta:

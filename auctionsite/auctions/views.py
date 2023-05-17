@@ -11,6 +11,7 @@ from django.http import HttpResponseRedirect, Http404
 from django.db.models import Q
 from django.utils import timezone
 from django_email_verification import send_email
+from twilio.rest import Client
 
 from .models import Auction, Item, Opinion, Bid, Category, Account
 from .utils import average_rating
@@ -272,7 +273,7 @@ class DeleteOpinion(LoginRequiredMixin, SuccessMessageMixin, DeleteView):
 
 class BidAuction(LoginRequiredMixin, View):
     """The view destined to bid on auctions (if bid is 20 minutes before end of auction,
-      it increases end of auction time for 20 minutes)"""
+      it increases end of auction time for 20 minutes). It sends SMS to a person whose auction has been outbid """
     form = BidForm()
     context = {}
     template_name = 'auctions/bid_form.html'
@@ -288,6 +289,10 @@ class BidAuction(LoginRequiredMixin, View):
         form = BidForm(request.POST)
         pk = kwargs['pk']
         auction = Auction.objects.get(id=pk)
+        account_sid = 'AC449aac404a7f04f5504ce0f19a97d237'
+        auth_token = '832c05a0407d124bb5b7c55cbcc8ef01'
+        client = Client(account_sid, auth_token)
+        bidder = request.user
         if form.is_valid():
             if auction.buyer == request.user:
                 messages.error(request, 'You cannot bid because last person who bids is you!')
@@ -299,13 +304,21 @@ class BidAuction(LoginRequiredMixin, View):
                 messages.error(request, 'Bid on expired or sold auctions is not allowed!')
                 return redirect(f'/auction/{auction.id}')
             new_price = form.cleaned_data['amount']
-            bidder = request.user
+            
             if auction.min_price >= new_price:  # Check if new price is bigger than minimum price of the auction
                 messages.error(request, 'New price cannot be equal or less than minimum price!')
                 return render(request, self.template_name, self.context)
             else:
                 if timezone.now() + timezone.timedelta(minutes=20) > auction.end_date:
                     auction.end_date += timezone.timedelta(minutes=20)
+                if auction.buyer:
+                    outbided_account = Account.objects.get(user=auction.buyer) # Get account for send SMS
+                    if outbided_account.phone_number:
+                        message = client.messages.create(
+                            body=f'Your auction: "{auction.name}" has been outbid. New price is {new_price}!',
+                            from_='+12543544729',
+                            to='+48{}'.format(outbided_account.phone_number)
+                        )
                 auction.min_price = new_price
                 auction.buyer = bidder
                 auction.save()
@@ -431,19 +444,23 @@ class AddUser(View):
 
 
 class UserProfile(View):
-    """This view shows user data"""
+    """This view shows user data (if user is created by all-auth library it creates extra account fields)"""
     def get(self, request, *args, **kwargs):
         username = kwargs['username']   # Get user profile from the URL
         user = User.objects.get(username=username)  # Get user data
         bids = Bid.objects.filter(bidder=user).order_by('-time')  # Get every user bids
-        user_account = Account.objects.get(user=user)
         context = {
             'user': user,
             'bids': bids,
-            'user_account': user_account,
         }
-        return render(request, 'auctions/user_profile.html', context)
-
+        try:
+            user_account = Account.objects.get(user=user)
+            context['user_account'] = user_account
+            return render(request, 'auctions/user_profile.html', context)
+        except:
+            user_account = Account.objects.create(user=user)
+            context['user_account'] = user_account
+            return render(request, 'auctions/user_profile.html', context)
 
 class EditUserProfile(LoginRequiredMixin, SuccessMessageMixin, View):
     """This view edits user profile"""
@@ -466,17 +483,16 @@ class EditUserProfile(LoginRequiredMixin, SuccessMessageMixin, View):
         form = EditUserForm(request.POST)
         user = request.user
         user_account = Account.objects.get(user=user)
-        if form.is_valid():
-            first_name = form.cleaned_data['first_name']
-            last_name = form.cleaned_data['last_name']
-            phone_number = form.cleaned_data['phone_number']
-            user.first_name = first_name
-            user.last_name = last_name
-            user_account.phone_number = phone_number
+        if form.is_valid():     # Check if form is valid
+            user.first_name = form.cleaned_data['first_name']
+            user.last_name = form.cleaned_data['last_name']
+            user_account.phone_number = form.cleaned_data['phone_number']
             user_account.save()
             user.save()
             messages.success(request, 'Account data changed successfully')
             return redirect(f'/user/{user.username}')
+        else:   # If form is not valid return form with errors
+            return render(request, self.template_name, {'form': form})
 
 
 class ResetPassword(LoginRequiredMixin, View):
