@@ -26,7 +26,7 @@ SECRET_KEY = 'django-insecure-5#ssk+tt+=udx7%yl_5)lu%m79n()31#y*0m9cr87w8yo_t8rc
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['localhost']
 
 
 # Application definition
@@ -43,10 +43,9 @@ INSTALLED_APPS = [
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
-    'allauth.socialaccount.providers.github',
     'allauth.socialaccount.providers.google',
     'django_email_verification',
-
+    'crispy_forms',
 
 ]
 
@@ -155,7 +154,7 @@ EMAIL_PAGE_DOMAIN = 'http://localhost:8000'
 EMAIL_MAIL_PAGE_TEMPLATE = 'auctions/confirm_email.html'
 
 # Django Email Backend
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend' 
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_HOST_USER = 'testdjangoapp381@gmail.com'
@@ -170,4 +169,29 @@ AUTHENTICATION_BACKENDS = [
 ]
 
 
+SITE_ID = 1
+
+
+# 322829691553-686n21vnup05busnon05bcg87ej920t6.apps.googleusercontent.com 
+
+# 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 
+
+
+SOCIALACCOUNT_PROVIDERS = {
+    'google': {
+        'SCOPE': [
+            'profile',
+            'email',
+        ],
+        'AUTH_PARAMS': {
+            'access_type': 'online',
+        },
+        'OAUTH_PKCE_ENABLED': True,
+    }
+}
+
+LOGIN_REDIRECT_URL = '/home'
+
+
+LOGOUT_REDIRECT_URL = '/login'
 

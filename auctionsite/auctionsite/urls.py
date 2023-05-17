@@ -36,7 +36,6 @@ urlpatterns = [
     path('bid-auction/<int:pk>', auctions.BidAuction.as_view()),
     path('search', auctions.SearchAuction.as_view()),
     path('edit-opinion/<int:pk>', auctions.EditOpinion.as_view()),
-    path('login/', auctions.Login.as_view()),
     path('logout/', auctions.Logout.as_view()),
     path('create-account/', auctions.AddUser.as_view()),
     path('categories/', auctions.CategoriesList.as_view()),
@@ -52,19 +51,19 @@ urlpatterns = [
     path('delete-user/<int:pk>', auctions.DeleteUser.as_view()),
     
     path('reset_password/', auth_views.PasswordResetView.as_view(
-    template_name='auctions/accounts/password_reset.html')
+    template_name='auctions/account/password_reset.html')
          , name='reset_password'),
 
     path('reset/<uidb64>/<token>', auth_views.PasswordResetConfirmView.as_view(
-    template_name='auctions/accounts/password_reset_form.html'),
+    template_name='auctions/account/password_reset_form.html'),
           name='password_reset_confirm'),
 
     path('reset_password_sent/', auth_views.PasswordResetDoneView.as_view(
-    template_name='auctions/accounts/password_reset_send.html')
+    template_name='auctions/account/password_reset_send.html')
          , name='password_reset_done'),
 
     path('reset_password_complete/', auth_views.PasswordResetCompleteView.as_view(
-    template_name='auctions/accounts/password_reset_done.html'),
+    template_name='auctions/account/password_reset_done.html'),
           name='password_reset_complete'),
 
     path('accounts/', include('allauth.urls')),
