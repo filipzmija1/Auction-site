@@ -16,17 +16,19 @@ class AuctionSerializer(serializers.ModelSerializer):
 class OpinionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Opinion
-        fields = ['auction', 'reviewer', 'rating', 'comment', 'date_create', 'date_edited']
+        fields = ['id', 'auction', 'reviewer', 'rating', 'comment', 'date_created', 'date_edited']
 
 
 class ItemSerializer(serializers.ModelSerializer):
-    model = Item
-    fields = ['name', 'description', 'image', 'category']
+    class Meta:
+        model = Item
+        fields = ['id', 'name', 'description', 'image', 'category']
 
 
 class CategorySerializer(serializers.ModelSerializer):
-    model = Category
-    fields = ['name', 'description']
+    class Meta:
+        model = Category
+        fields = ['id', 'name', 'description']
 
 
 class UserSerializer(serializers.ModelSerializer):

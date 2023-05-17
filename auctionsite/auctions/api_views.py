@@ -24,3 +24,18 @@ class UserView(viewsets.ModelViewSet):
     """Use viewsets to stop reapeating code"""
     queryset = User.objects.all()
     serializer_class = UserSerializer
+
+
+class OpinionView(viewsets.ModelViewSet):
+    queryset = Opinion.objects.all()
+    serializer_class = OpinionSerializer
+
+
+class ItemView(viewsets.ModelViewSet):
+    queryset = Item.objects.all()
+    serializer_class = ItemSerializer
+
+
+class CategoryView(viewsets.ModelViewSet):
+    queryset = Category.objects.all()
+    serializer_class = CategorySerializer

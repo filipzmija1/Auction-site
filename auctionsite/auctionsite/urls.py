@@ -28,6 +28,9 @@ import auctions.api_views as api_views
 
 router = DefaultRouter()
 router.register('users', api_views.UserView)
+router.register('opinions', api_views.OpinionView)
+router.register('items', api_views.ItemView)
+router.register('categories', api_views.CategoryView)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -73,8 +76,9 @@ urlpatterns = [
           name='password_reset_complete'),
 
     path('accounts/', include('allauth.urls')),
-    path('api/', api_views.AuctionView.as_view()),
-    path('api/<int:pk>', api_views.AuctionDetailView.as_view()),
+    
+    path('api/auctions/', api_views.AuctionView.as_view()),
+    path('api/auctions/<int:pk>', api_views.AuctionDetailView.as_view()),
     path('api/', include((router.urls, 'api'))),
 
 ]
