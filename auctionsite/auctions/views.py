@@ -12,7 +12,7 @@ from django.db.models import Q
 from django.utils import timezone
 from django_email_verification import send_email
 
-from .models import Auction, Item, Opinion, Bid, Category
+from .models import Auction, Item, Opinion, Bid, Category, Account
 from .utils import average_rating
 from .forms import BidForm, OpinionForm, SearchForm, LoginForm, AddUserForm, ResetPasswordForm, AddAuctionForm, \
     EditUserForm, EditOpinionForm
@@ -124,7 +124,6 @@ class AddAuction(LoginRequiredMixin, CreateView):
     """This view creates new auction (prefer to create item before creating auction)"""
     form = AddAuctionForm()
     template_name = 'auctions/auction_form.html'
-    login_url = '/login'
 
     def get(self, request, *args, **kwargs):
         return render(request, self.template_name, {'form': self.form})
@@ -160,7 +159,6 @@ class AddAuction(LoginRequiredMixin, CreateView):
 class BuyNow(LoginRequiredMixin, View):
     """This view is used to buy auction item without bidding (only if auction allows that)"""
     template_name = 'auctions/buy_auction_now.html'
-    login_url = '/login'
 
     def get(self, request, *args, **kwargs):
         auction_id = kwargs['pk']
@@ -203,7 +201,6 @@ class AddItem(CreateView):
 class AddOpinion(LoginRequiredMixin, View):
     """View destined to add new opinions about auctions"""
     template_name = 'auctions/opinion_form.html'
-    login_url = '/login'
 
     def get(self, request, *args, **kwargs):    # Handle GET request to display the opinion form
         form = OpinionForm()
@@ -227,7 +224,6 @@ class AddOpinion(LoginRequiredMixin, View):
 class EditOpinion(LoginRequiredMixin, View):
     """This view edits opinion"""
     template_name = 'auctions/opinion_edit.html'
-    login_url = '/login'
 
     def get(self, request, *args, **kwargs):
         opinion_id = kwargs['pk']   # Get opinion id from the URL
@@ -261,7 +257,6 @@ class DeleteOpinion(LoginRequiredMixin, SuccessMessageMixin, DeleteView):
     """This view deletes opinion"""
     model = Opinion
     success_message = 'Opinion deleted successfully'
-    login_url = '/login'
 
     def get_success_url(self):
         """This method get the success URL from opinion id"""
@@ -281,7 +276,6 @@ class BidAuction(LoginRequiredMixin, View):
     form = BidForm()
     context = {}
     template_name = 'auctions/bid_form.html'
-    login_url = '/login'
 
     def get(self, request, *args, **kwargs):
         pk = kwargs['pk']
@@ -363,7 +357,6 @@ class SearchAuction(View):
 
 class Login(View):
     template_name = 'auctions/login_form.html'
-    login_url = '/login'
 
     def get(self, request, *args, **kwargs):
         form = LoginForm()
@@ -430,6 +423,7 @@ class AddUser(View):
                     password=password,
                     email=email)
                 user.is_active = False
+                Account.objects.create(user=user)
                 send_email(user)    # Send email to verify account
                 messages.success(request, 'Check email to enable your account')
                 return redirect('/home')
@@ -442,22 +436,27 @@ class UserProfile(View):
         username = kwargs['username']   # Get user profile from the URL
         user = User.objects.get(username=username)  # Get user data
         bids = Bid.objects.filter(bidder=user).order_by('-time')  # Get every user bids
+        user_account = Account.objects.get(user=user)
         context = {
             'user': user,
             'bids': bids,
+            'user_account': user_account,
         }
         return render(request, 'auctions/user_profile.html', context)
 
 
 class EditUserProfile(LoginRequiredMixin, SuccessMessageMixin, View):
     """This view edits user profile"""
-    login_url = '/login'
     template_name = 'auctions/edit_user_profile.html'
 
     def get(self, request, *args, **kwargs):
         user_id = kwargs['pk']  # Get id from the URL
         user = request.user
-        form = EditUserForm(instance=user)
+        user_account = Account.objects.get(user=user)
+        form = EditUserForm(initial={
+            'first_name':user.first_name,
+            'last_name':user.last_name,
+            'phone_number':user_account.phone_number})
         if user_id != user.id:
             raise PermissionDenied
         else:
@@ -466,11 +465,15 @@ class EditUserProfile(LoginRequiredMixin, SuccessMessageMixin, View):
     def post(self, request, *args, **kwargs):
         form = EditUserForm(request.POST)
         user = request.user
+        user_account = Account.objects.get(user=user)
         if form.is_valid():
             first_name = form.cleaned_data['first_name']
             last_name = form.cleaned_data['last_name']
+            phone_number = form.cleaned_data['phone_number']
             user.first_name = first_name
             user.last_name = last_name
+            user_account.phone_number = phone_number
+            user_account.save()
             user.save()
             messages.success(request, 'Account data changed successfully')
             return redirect(f'/user/{user.username}')
@@ -480,7 +483,6 @@ class ResetPassword(LoginRequiredMixin, View):
     """Reset logged user password"""
     template_name = 'auctions/reset_password_form.html'
     form = ResetPasswordForm()
-    login_url = '/login'
 
     def get(self, request, *args, **kwargs):
         username = kwargs['username']  # Get user username from the URL
@@ -508,7 +510,6 @@ class ResetPassword(LoginRequiredMixin, View):
 class DeleteUser(LoginRequiredMixin, SuccessMessageMixin, DeleteView):
     """This view allows user to delete his own profile"""
     model = User
-    login_url = '/login'
     success_message = 'Your account has been deleted successfully'
     template_name = 'auctions/user_confirm_delete.html'
     

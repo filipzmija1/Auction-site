@@ -1,6 +1,8 @@
 from django import forms
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
+from phonenumber_field.widgets import PhoneNumberPrefixWidget
+from phonenumber_field.modelfields import PhoneNumberField
 
 from .models import Bid, Opinion, Auction
 
@@ -38,6 +40,7 @@ class AddUserForm(forms.ModelForm):
 
     class Meta:
         model = User
+
         fields = ['username', 'password', 'confirm_password', 'email']
 
 
@@ -54,10 +57,10 @@ class AddAuctionForm(forms.ModelForm):
                                     help_text='month/day/year hour:minutes:seconds')
 
 
-class EditUserForm(forms.ModelForm):
-    class Meta:
-        model = User
-        fields = ['first_name', 'last_name']
+class EditUserForm(forms.Form):
+    first_name = forms.CharField(max_length=150, required=False)
+    last_name = forms.CharField(max_length=150, required=False)
+    phone_number = forms.CharField(widget=PhoneNumberPrefixWidget(), required=False)
 
 
 class EditOpinionForm(forms.ModelForm):

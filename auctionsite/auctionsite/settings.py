@@ -46,6 +46,8 @@ INSTALLED_APPS = [
     'allauth.socialaccount.providers.google',
     'django_email_verification',
     'crispy_forms',
+    'babel',
+    'phonenumber_field',
 
 ]
 
