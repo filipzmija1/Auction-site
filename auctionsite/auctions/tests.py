@@ -6,7 +6,7 @@ from django.test import TestCase
 from django.contrib.auth.models import User
 from django.utils import timezone
 
-from .models import Auction, Item, Category, Bid
+from .models import Auction, Item, Category, Bid, Opinion
 
 @pytest.mark.django_db
 def test_home_page(client):
@@ -244,3 +244,43 @@ def test_buy_now_post(client, user_create, auction):
     assert auction.status == 'sold'
     assert auction.buyer == user_create
 
+
+@pytest.mark.django_db
+def test_add_item(category_object, client):
+    """Test AddItem view"""
+    url = '/add-item/'
+    category_id = category_object.id  # Pobierz identyfikator kategorii
+    response = client.post(url, {
+        'name': 'Test Item',
+        'description': 'Test Description',
+        'category': category_id
+    })
+    assert response.status_code == 302  # Sprawdź kod odpowiedzi
+    assert Item.objects.count() == 1 
+
+
+@pytest.mark.django_db
+def test_add_opinion(client, one_auction, user_create):
+    """Test AddOpinion view"""
+    url = f'/add-opinion/{one_auction.pk}'
+    client.force_login(user_create)
+    response = client.post(url, {
+        'auction': one_auction,
+        'reviewer': user_create,
+        'rating': 5,
+        'comment': 'test comment',
+    })
+    assert response.status_code == 302
+    assert Opinion.objects.count() == 1
+
+
+@pytest.mark.django_db
+def test_add_opinion_fail(client, one_auction, user_create):
+    """Test AddOpinion view with invalid data"""
+    url = f'/add-opinion/{one_auction.pk}'
+    client.force_login(user_create)
+    response = client.post(url,{
+        'rating': 5,
+    })
+    assert response.status_code == 200
+    assert Opinion.objects.count() == 0

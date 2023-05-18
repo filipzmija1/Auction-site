@@ -93,3 +93,26 @@ def category():
 def other_user():
     user1 = get_user_model().objects.create_user(username='testuser3', password='12345')
     return user1
+
+
+@pytest.fixture
+def category_object():
+    category = Category.objects.create(name='test', description='testest')
+    return category
+
+
+@pytest.fixture
+def one_auction():
+    buyer = get_user_model().objects.create_user(username='testuser2', password='12345')
+    seller = get_user_model().objects.create_user(username='testuser3', password='12345')
+    category = Category.objects.create(name='testname', description='ttest')
+    item = Item.objects.create(name='test', description='test', category=category)
+    auction = Auction.objects.create(
+            name='random_name',
+            item=item,
+            min_price=20,
+            buy_now_price=100,
+            end_date=datetime.now(),
+            seller=seller,
+            buyer=buyer)
+    return auction
