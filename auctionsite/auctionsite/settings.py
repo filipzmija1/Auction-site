@@ -39,7 +39,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.sites',
-    'auctions.apps.AuctionsConfig',
+    
+    # 3rd-party apps
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
@@ -48,8 +49,10 @@ INSTALLED_APPS = [
     'crispy_forms',
     'babel',
     'phonenumber_field',
-    'rest_framework'
+    'rest_framework',
 
+    # Local
+    'auctions.apps.AuctionsConfig',
 ]
 
 MIDDLEWARE = [

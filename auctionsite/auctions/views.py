@@ -26,14 +26,14 @@ class StartPage(View):
     """This view shows the start page of the auction house"""
     template_name = 'auctions/base_template.html'
     title = 'Auction house'
-    auctions = Auction.objects.count()
-    users = User.objects.count()
-
+    
     def get(self, request):
+        users = User.objects.count()
+        auctions = Auction.objects.count()
         context = {
             'title': self.title,
-            'auctions': self.auctions,
-            'users': self.users
+            'auctions': auctions,
+            'users': users,
         }
         return render(request, self.template_name, context)
 
@@ -50,7 +50,10 @@ class ItemDetails(View):
     def get(self, request, *args, **kwargs):
         pk = kwargs['pk']   # Get the primary key of the item from the URL
         item = Item.objects.get(pk=pk)
-        return render(request, self.template_name, {'item': item})
+        context = {
+            'item': item,
+            }
+        return render(request, self.template_name, context)
 
 
 class AuctionsList(ListView):
@@ -273,7 +276,7 @@ class DeleteOpinion(LoginRequiredMixin, SuccessMessageMixin, DeleteView):
 
 class BidAuction(LoginRequiredMixin, View):
     """The view destined to bid on auctions (if bid is 20 minutes before end of auction,
-      it increases end of auction time for 20 minutes). It sends SMS to a person whose auction has been outbid """
+      it increases end of auction time for 20 minutes). It sends SMS to a person whose has been outbid """
     form = BidForm()
     context = {}
     template_name = 'auctions/bid_form.html'
