@@ -423,8 +423,6 @@ class AddUser(View):
             confirm_password = form.cleaned_data['confirm_password']
             password = form.cleaned_data['password']
             email = form.cleaned_data['email']
-            first_name = form.cleaned_data['first_name']
-            last_name = form.cleaned_data['last_name']
             if username in usernames:   # Check if username already exists
                 form.add_error(None, 'User already exists')
             elif password != confirm_password:
@@ -434,8 +432,6 @@ class AddUser(View):
             else:
                 user = User.objects.create_user(
                     username=username,
-                    first_name=first_name,
-                    last_name=last_name,
                     password=password,
                     email=email)
                 user.is_active = False

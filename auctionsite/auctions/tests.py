@@ -284,3 +284,197 @@ def test_add_opinion_fail(client, one_auction, user_create):
     })
     assert response.status_code == 200
     assert Opinion.objects.count() == 0
+
+
+@pytest.mark.django_db
+def test_edit_opinion(opinion, client, user_create):
+    """Test EditOpinion view"""
+    client.force_login(user_create)
+    url = f'/edit-opinion/{opinion.id}'
+    response = client.post(url, {
+        'rating': 4,
+        'comment': 'Updated comment',
+    })
+    assert response.status_code == 302
+    opinion.refresh_from_db()
+    assert opinion.rating == 4
+    assert opinion.comment == 'Updated comment'
+    assert opinion.date_edited is not None
+
+
+@pytest.mark.django_db
+def test_delete_opinion_post(client, opinion, user_create):
+    """Test DeleteOpinion view POST request permissiondenied"""
+    url = f'/delete-opinion/{opinion.pk}'
+    client.force_login(user_create) 
+    response = client.post(url)
+    assert response.status_code == 403
+
+
+@pytest.mark.django_db
+def test_delete_opinion_post(client, opinion):
+    """Test DeleteOpinion view POST request """
+    url = f'/delete-opinion/{opinion.pk}'
+    client.force_login(opinion.reviewer) 
+    response = client.post(url)
+    assert response.status_code == 302
+    assert Opinion.objects.count() == 0
+
+
+@pytest.mark.django_db
+def test_bid_auction(client, one_auction, user_create):
+    """Test BidAuction view GET request"""
+    url = f'/bid-auction/{one_auction.pk}'
+    client.force_login(user_create)
+    response = client.get(url)
+    assert response.status_code == 200
+    assert response.context['auction'] == one_auction
+
+
+@pytest.mark.django_db
+def test_bid_auction_post_own_auction(client, one_auction, user_create):
+    """Test BidAuction view POST request on auctions'owner"""
+    url = f'/bid-auction/{one_auction.pk}'
+    client.force_login(one_auction.seller)
+    response = client.post(url, {'amount': 50})
+    assert response.status_code == 302
+    assert response.url == f'/auction/{one_auction.id}'
+    one_auction.refresh_from_db()
+    assert one_auction.min_price == 20
+
+
+@pytest.mark.django_db
+def test_bid_auction_post(client, one_auction, user_create):
+    """Test BidAuction view POST request with valid form"""
+    url = f'/bid-auction/{one_auction.pk}'
+    client.force_login(user_create)  # Log in as a bidder
+    response = client.post(url, {'amount': 50})
+    one_auction.refresh_from_db()
+    assert response.status_code == 302
+    assert response.url == f'/auction/{one_auction.id}'
+    assert one_auction.min_price == 50
+    assert one_auction.buyer == user_create
+    
+
+@pytest.mark.django_db
+def test_bid_history(client, auction):
+    """Test BidHistory view"""
+    url = f'/bids/{auction.pk}'
+    response = client.get(url)
+    assert response.status_code == 200
+    assert response.context['auction'] == auction
+    assert list(response.context['bids']) == list(auction.bid_set.all().order_by('-time'))
+
+
+@pytest.mark.django_db
+def test_search_auction_post(client, auctions_create, category):
+    """Test SearchAuction view POST request"""
+    url = '/search'
+    response = client.post(url, {'search': 'test'})
+    assert response.status_code == 200
+    assert list(response.context['item_result']) == list(Item.objects.filter(name__icontains='test'))
+    assert list(response.context['auction_result']) == list(Auction.objects.filter(name__icontains='test'))
+    assert list(response.context['category_result']) == list(Category.objects.filter(name__icontains='test'))
+
+
+@pytest.mark.django_db
+def test_add_user_post_valid(client):
+    """Test AddUser view POST request with valid form"""
+    url = '/create-account/'
+    response = client.post(url, {
+        'username': 'testuser',
+        'confirm_password': 'password123',
+        'password': 'password123',
+        'email': 'test@example.com',
+    })
+    assert response.status_code == 302
+    assert response.url == '/home'
+
+
+@pytest.mark.django_db
+def test_add_user_post_passwords_mismatch(client):
+    """Test AddUser view POST request with mismatched passwords"""
+    url = '/create-account/'
+    response = client.post(url, {
+        'username': 'testuser',
+        'confirm_password': 'password123',
+        'password': 'differentpassword',
+        'email': 'test@example.com',
+    })
+    assert response.status_code == 200
+    assert User.objects.count() == 0
+
+
+@pytest.mark.django_db
+def test_user_profile(client, user_create):
+    """Test UserProfile view """
+    url = f'/user/{user_create.username}'
+    response = client.get(url)
+    assert response.status_code == 200
+
+
+@pytest.mark.django_db
+def test_edit_user_valid_form(client, user_create):
+    """Test EditProfile view with valid form"""
+    client.force_login(user_create)
+    url = f'/edit-profile/{user_create.id}'
+    response = client.post(url, {
+        'first_name': 'Updated',
+        'last_name': 'User',
+        'phone_number': '123456789'
+    })
+    user_create.refresh_from_db()
+    assert response.status_code == 302
+    assert user_create.first_name == 'Updated'
+    assert user_create.last_name == 'User'
+    assert user_create.account.phone_number == '123456789'
+
+
+@pytest.mark.django_db
+def test_edit_user_invalid_form(client, user_create):
+    """Test EditUserProfile view POST request with invalid form"""
+    client.force_login(user_create)
+    url = f'/edit-profile/{user_create.id}'
+    response = client.post(url, {
+        'phone_number': '123456'
+    })
+    assert response.status_code == 200
+    assert user_create.account.phone_number != '123456'
+
+@pytest.mark.django_db
+def test_reset_password_valid_form(client, user_create):
+    """Test ResetPassword view with valid form"""
+    url = f'/reset-password/{user_create.username}'
+    client.force_login(user_create)
+    response = client.post(url, {
+        'new_password': 'newpassword123',
+        'confirm_password': 'newpassword123'
+    })
+    user_create.refresh_from_db()
+    assert response.status_code == 302
+    assert user_create.check_password('newpassword123')
+
+
+@pytest.mark.django_db
+def test_reset_invalid_password(client, user_create):
+    """Test ResetPassword view with invalid passwords"""
+    url = f'/reset-password/{user_create.username}'
+    client.force_login(user_create)
+    response = client.post(url, {
+        'new_password': 'newpassword123',
+        'confirm_password': 'differentpassword'
+    })
+    user_create.refresh_from_db()
+    assert response.status_code == 200
+    assert not user_create.check_password('newpassword123')
+
+
+@pytest.mark.django_db
+def test_delete_user(client, user_create):
+    """Test DeleteUser view"""
+    url = f'/delete-user/{user_create.id}'
+    client.force_login(user_create)
+    response = client.post(url)
+    assert response.status_code == 302
+    assert response.url == '/home'
+    assert User.objects.count() == 0
