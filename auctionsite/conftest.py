@@ -5,7 +5,7 @@ from datetime import datetime
 from django.test import Client
 from django.contrib.auth import get_user_model
 
-from auctions.models import Auction, Item, Category
+from auctions.models import Auction, Item, Category, Opinion
 
 
 @pytest.fixture
@@ -65,4 +65,31 @@ def auction():
             end_date=datetime.now(),
             seller=seller,
             buyer=buyer)
+    Opinion.objects.create(
+        auction=auction,
+        reviewer=buyer,
+        rating=5,
+        comment='Average auction'
+    )
     return auction
+
+
+@pytest.fixture
+def categories_create():
+    name = 'test'
+    for _ in range(5):
+        Category.objects.create(name=name, description='ttest')
+        name += 'test'
+
+
+@pytest.fixture
+def category():
+    category = Category.objects.create(name='testname', description='ttest')
+    item = Item.objects.create(name='test', description='test', category=category)
+    item = Item.objects.create(name='test1', description='test', category=category)
+    return category
+
+@pytest.fixture
+def other_user():
+    user1 = get_user_model().objects.create_user(username='testuser3', password='12345')
+    return user1
