@@ -1,4 +1,6 @@
 from datetime import datetime
+from PIL import Image
+from io import BytesIO
 
 from django.shortcuts import render, redirect
 from django.views.generic import View, ListView, CreateView, DeleteView
@@ -17,6 +19,7 @@ from .models import Auction, Item, Opinion, Bid, Category, Account
 from .utils import average_rating
 from .forms import BidForm, OpinionForm, SearchForm, LoginForm, AddUserForm, ResetPasswordForm, AddAuctionForm, \
     EditUserForm, EditOpinionForm
+
 
 
 User = get_user_model()
