@@ -1,8 +1,8 @@
 from datetime import datetime
 from PIL import Image
 from io import BytesIO
-from django.forms.models import BaseModelForm
 
+from django.forms.models import BaseModelForm
 from django.shortcuts import render, redirect
 from django.views.generic import View, ListView, CreateView, DeleteView
 from django.contrib.auth import get_user_model, login, logout, authenticate
@@ -13,6 +13,9 @@ from django.contrib.messages.views import SuccessMessageMixin
 from django.http import HttpResponse, HttpResponseRedirect, Http404
 from django.db.models import Q
 from django.utils import timezone
+from django.core.mail import send_mail
+from django.conf import settings
+
 from django_email_verification import send_email
 from twilio.rest import Client
 
@@ -330,6 +333,10 @@ class BidAuction(LoginRequiredMixin, View):
                             from_='+12543544729',
                             to='+48{}'.format(outbided_account.phone_number)
                         )
+                send_mail(f'{auction.name}', 
+                                  f'You have been outbid. New price is {new_price}',
+                                   f'{settings.EMAIL_HOST_USER}',
+                                   [f'{auction.buyer.email}'])
                 auction.min_price = new_price
                 auction.buyer = bidder
                 auction.save()
