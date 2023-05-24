@@ -1,6 +1,7 @@
 from datetime import datetime
 from PIL import Image
 from io import BytesIO
+from django.forms.models import BaseModelForm
 
 from django.shortcuts import render, redirect
 from django.views.generic import View, ListView, CreateView, DeleteView
@@ -9,7 +10,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied
 from django.contrib.messages.views import SuccessMessageMixin
-from django.http import HttpResponseRedirect, Http404
+from django.http import HttpResponse, HttpResponseRedirect, Http404
 from django.db.models import Q
 from django.utils import timezone
 from django_email_verification import send_email
@@ -197,12 +198,16 @@ class BuyNow(LoginRequiredMixin, View):
         return redirect('/auctions')
 
 
-class AddItem(CreateView):
+class AddItem(LoginRequiredMixin, CreateView):
     """This view creates new item that should be used in creating auction"""
     model = Item
     fields = ['name', 'description', 'image', 'category']
     template_name = 'auctions/item_form.html'
     success_url = '/items'
+
+    def form_valid(self, form):
+        form.instance.creator = self.request.user
+        return super().form_valid(form)
 
 
 class AddOpinion(LoginRequiredMixin, View):

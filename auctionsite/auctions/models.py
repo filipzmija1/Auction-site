@@ -27,6 +27,7 @@ class Item(models.Model):
                             blank=True,
                             upload_to='images/')
     category = models.ForeignKey(Category, on_delete=models.CASCADE)
+    creator = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
 
     def __str__(self):
         return self.name
