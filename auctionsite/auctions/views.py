@@ -130,14 +130,14 @@ class CategoryDetails(View):
 
 class AddAuction(LoginRequiredMixin, CreateView):
     """This view creates new auction (prefer to create item before creating auction)"""
-    form = AddAuctionForm()
     template_name = 'auctions/auction_form.html'
 
     def get(self, request, *args, **kwargs):
-        return render(request, self.template_name, {'form': self.form})
+        form = AddAuctionForm(user=request.user)
+        return render(request, self.template_name, {'form': form})
 
     def post(self, request, *args, **kwargs):
-        form = AddAuctionForm(request.POST)
+        form = AddAuctionForm(request.POST, user=request.user)
         if form.is_valid():
             name = form.cleaned_data['name']
             item = form.cleaned_data['item']

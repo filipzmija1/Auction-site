@@ -2,7 +2,7 @@ from django import forms
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 
-from .models import Bid, Opinion, Auction
+from .models import Bid, Opinion, Auction, Item
 
 
 User = get_user_model()
@@ -46,12 +46,18 @@ class ResetPasswordForm(forms.Form):
 
 
 class AddAuctionForm(forms.ModelForm):
+    item = forms.ModelChoiceField(queryset=None)
     class Meta:
         model = Auction
         fields = ['name', 'item', 'min_price', 'buy_now_price', 'end_date']
     end_date = forms.DateTimeField(widget=forms.TextInput(attrs={'placeholder': '01/20/1995 15:30:00'}),
                                     help_text='month/day/year hour:minutes:seconds')
 
+    def __init__(self, *args, **kwargs):
+        """This metod gets logged user and sets queryset for item field(user's items)"""
+        user = kwargs.pop('user')  # Get logged user
+        super().__init__(*args, **kwargs)
+        self.fields['item'].queryset = Item.objects.filter(creator=user)
 
 class EditUserForm(forms.Form):
     first_name = forms.CharField(max_length=150, required=False)
