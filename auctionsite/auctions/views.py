@@ -13,6 +13,7 @@ from django.contrib.messages.views import SuccessMessageMixin
 from django.http import HttpResponse, HttpResponseRedirect, Http404
 from django.db.models import Q
 from django.utils import timezone
+from django.core.paginator import Paginator
 from django.core.mail import send_mail
 from django.conf import settings
 
@@ -48,6 +49,7 @@ class StartPage(View):
 class ItemsList(ListView):
     """Shows a list of all available items"""
     model = Item
+    paginate_by = 10
 
 
 class ItemDetails(View):
@@ -67,6 +69,7 @@ class AuctionsList(ListView):
     """Shows a list of all auctions"""
     model = Auction
     context_object_name = 'auction_list'
+    paginate_by = 5
 
     def get_context_data(self, **kwargs):
         """Method is used to change auction status after expired or sold"""
@@ -101,13 +104,16 @@ class AuctionDetails(View):
         pk = kwargs['pk']   # Get the primary key of the auction from the URL
         auction = Auction.objects.get(pk=pk)
         opinions = auction.opinion_set.all().order_by('-date_created')
+        paginator = Paginator(opinions, 10)
+        page_number = request.GET.get('page')
+        page_obj = paginator.get_page(page_number)
         ratings = []
         for opinion in opinions:
             ratings.append(opinion.rating)  # Get every rating from opinion
         average_rate = average_rating(ratings)  # Count average rating
         context = {
             'auction': auction,
-            'opinions': opinions,
+            'opinions': page_obj,
             'average_rating': average_rate,
         }
         return render(request, self.template_name, context)
@@ -287,7 +293,7 @@ class DeleteOpinion(LoginRequiredMixin, SuccessMessageMixin, DeleteView):
 
 class BidAuction(LoginRequiredMixin, View):
     """The view destined to bid on auctions (if bid is 20 minutes before end of auction,
-      it increases end of auction time for 20 minutes). It sends SMS to a person whose has been outbid """
+      it increases end of auction time for 20 minutes). It sends SMS and email to a person whose has been outbid """
     form = BidForm()
     context = {}
     template_name = 'auctions/bid_form.html'
@@ -333,16 +339,18 @@ class BidAuction(LoginRequiredMixin, View):
                             from_='+12543544729',
                             to='+48{}'.format(outbided_account.phone_number)
                         )
-                send_mail(f'{auction.name}', 
+                send_mail(f'{auction.name}',    # Sends email to outbid person
                                   f'You have been outbid. New price is {new_price}',
                                    f'{settings.EMAIL_HOST_USER}',
-                                   [f'{auction.buyer.email}'])
+                                   [f'{auction.buyer.email}'])  
                 auction.min_price = new_price
                 auction.buyer = bidder
                 auction.save()
                 Bid.objects.create(amount=new_price, auction=auction, bidder=bidder)
             messages.success(request, 'Bid successfully')  # Display success and redirect to the auction details page
             return redirect(f'/auction/{auction.id}')
+        else:
+            return render(request, self.template_name, self.context)
 
 
 class BidHistory(View):
@@ -463,9 +471,12 @@ class UserProfile(View):
         username = kwargs['username']   # Get user profile from the URL
         user = User.objects.get(username=username)  # Get user data
         bids = Bid.objects.filter(bidder=user).order_by('-time')  # Get every user bids
+        paginator = Paginator(bids, 3)
+        page_number = request.GET.get('page')
+        page_obj = paginator.get_page(page_number)
         context = {
             'user': user,
-            'bids': bids,
+            'bids': page_obj,
         }
         try:
             user_account = Account.objects.get(user=user)
