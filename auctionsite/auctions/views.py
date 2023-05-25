@@ -130,9 +130,12 @@ class CategoryDetails(View):
         slug = kwargs['slug']   # Get category name from URL
         category = Category.objects.get(name=slug)
         items = category.item_set.all()
+        paginator = Paginator(items, 25)
+        page_number = request.GET.get('page')
+        page_obj = paginator.get_page(page_number)
         context = {
             'category': category,
-            'items': items
+            'items': page_obj
         }
         return render(request, 'auctions/category_detail.html', context)
 
@@ -392,6 +395,8 @@ class SearchAuction(View):
                 context['auction_result'] = auction_result
                 context['category_result'] = category_result
                 return render(request, self.template_name, context)
+        else:
+            return render(request, self.template_name, {'form': form})
 
 
 class Login(View):
@@ -417,6 +422,8 @@ class Login(View):
             else:
                 form.add_error(None, 'Invalid username or password')
                 return render(request, self.template_name, {'form': form})
+        else:
+            return render(request, self.template_name, {'form': form})
 
 
 class Logout(View):
@@ -462,7 +469,8 @@ class AddUser(View):
                 send_email(user)    # Send email to verify account
                 messages.success(request, 'Check email to enable your account')
                 return redirect('/home')
-        return render(request, self.template_name, {'form': form})
+        else:
+            return render(request, self.template_name, {'form': form})
 
 
 class UserProfile(View):
