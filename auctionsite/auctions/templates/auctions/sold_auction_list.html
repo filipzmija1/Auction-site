@@ -3,7 +3,23 @@
 {% block title %} Sold auctions {% endblock %}
 
 {% block content %}
+<div id="content", name="content", class="main">
+    <div class="row justify-content-center">
+        <div class="col-5">
 <h1>Sold auctions</h1>
+</div>
+</div>
+</div>
+<div id="content", name="content", class="main">
+    <div class="row justify-content-center">
+        <div class="col-15">
+<a href="/auctions/?status=available">Available auctions</a> |
+<a href="/auctions/?status=expired">Expired auctions</a> |
+<a href="/auctions/?status=sold">Sold auctions</a> |
+<a href="/auctions">All auctions</a>
+</div>
+</div>
+</div><br>
 {% for auction in auction_list %}
 {% if auction.status == 'sold' %}
 <ul>
