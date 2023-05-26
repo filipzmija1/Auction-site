@@ -39,7 +39,10 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.sites',
-    
+
+    # Local
+    'auctions.apps.AuctionsConfig',
+
     # 3rd-party apps
     'allauth',
     'allauth.account',
@@ -48,11 +51,9 @@ INSTALLED_APPS = [
     'django_email_verification',
     'crispy_forms',
     'babel',
-    'phonenumber_field',
     'rest_framework',
 
-    # Local
-    'auctions.apps.AuctionsConfig',
+    
 ]
 
 MIDDLEWARE = [
@@ -70,8 +71,8 @@ ROOT_URLCONF = 'auctionsite.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
-        'APP_DIRS': True,
+        'DIRS': [os.path.join(BASE_DIR, 'templates'), os.path.join(BASE_DIR, 'templates', 'allauth')],
+        'APP_DIRS': False,
         'OPTIONS': {
             'context_processors': [
                 'django.template.context_processors.debug',
