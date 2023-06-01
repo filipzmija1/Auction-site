@@ -312,8 +312,8 @@ class BidAuction(LoginRequiredMixin, View):
         form = BidForm(request.POST)
         pk = kwargs['pk']
         auction = Auction.objects.get(id=pk)
-        account_sid = 'AC449aac404a7f04f5504ce0f19a97d237'  # account sid used to send SMS
-        auth_token = '832c05a0407d124bb5b7c55cbcc8ef01'     # account auth_token used to send SMS
+        account_sid = ''  # account sid used to send SMS
+        auth_token = ''     # account auth_token used to send SMS
         client = Client(account_sid, auth_token)
         bidder = request.user
         if form.is_valid():
