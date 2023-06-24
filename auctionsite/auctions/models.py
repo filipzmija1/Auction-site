@@ -47,6 +47,12 @@ class Auction(models.Model):
         ('expired', 'expired'),                
         ('sold', 'sold'),
     )
+    id = models.UUIDField(
+        default=uuid.uuid4,
+        unique=True,
+        primary_key=True,
+        editable=False
+    )
     name = models.CharField(max_length=255)
     item = models.ForeignKey(Item, on_delete=models.CASCADE)
     min_price = models.DecimalField(max_digits=10, decimal_places=2)

@@ -1,6 +1,8 @@
 from datetime import datetime
+from typing import Any, Dict, Optional
 from PIL import Image
 from io import BytesIO
+from django.db import models
 
 from django.forms.models import BaseModelForm
 from django.shortcuts import render, redirect
@@ -59,15 +61,16 @@ class ItemDetails(DetailView):
 
 
 class AuctionsList(ListView):
-    """Shows a list of all auctions"""
+    """Shows a list of all auctions 
+    # TODO: after server depoloyment there has to be use scheduler to automate changing auction status"""
     model = Auction
-    context_object_name = 'auction_list'
+    context_object_name = 'auctions'
     paginate_by = 5
 
     def get_context_data(self, **kwargs):
         """Method is used to change auction status after expired or sold"""
         context = super().get_context_data(**kwargs)    # Get default context data
-        for auction in context['auction_list']:
+        for auction in context['auctions']:
             if auction.end_date < timezone.now() and auction.bid_set.count() > 0:
                 auction.status = 'sold'
                 auction.save()
@@ -89,27 +92,10 @@ class AuctionsList(ListView):
             return 'auctions/auction_list.html'
 
 
-class AuctionDetails(View):
+class AuctionDetails(DetailView):
     """This view shows the details (includes opinions) of particural auction"""
-    template_name = 'auctions/auction_detail.html'
-
-    def get(self, request, *args, **kwargs):
-        pk = kwargs['pk']   # Get the primary key of the auction from the URL
-        auction = Auction.objects.get(pk=pk)
-        opinions = auction.opinion_set.all().order_by('-date_created')
-        paginator = Paginator(opinions, 10)
-        page_number = request.GET.get('page')
-        page_obj = paginator.get_page(page_number)
-        ratings = []
-        for opinion in opinions:
-            ratings.append(opinion.rating)  # Get every rating from opinion
-        average_rate = average_rating(ratings)  # Count average rating
-        context = {
-            'auction': auction,
-            'opinions': page_obj,
-            'average_rating': average_rate,
-        }
-        return render(request, self.template_name, context)
+    context_object_name = 'auction'
+    model = Auction
 
 
 class CategoriesList(ListView):
@@ -117,56 +103,63 @@ class CategoriesList(ListView):
     model = Category
 
 
-class CategoryDetails(View):
+class CategoryDetails(DetailView):
     """Shows category details include category items"""
-    def get(self, request, *args, **kwargs):
-        slug = kwargs['slug']   # Get category name from URL
-        category = Category.objects.get(name=slug)
-        items = category.item_set.all()
-        paginator = Paginator(items, 25)
-        page_number = request.GET.get('page')
-        page_obj = paginator.get_page(page_number)
-        context = {
-            'category': category,
-            'items': page_obj
-        }
-        return render(request, 'auctions/category_detail.html', context)
+    context_object_name = 'category'
+    model = Category
 
+    def get_object(self, queryset=None):
+        if queryset is None:
+            queryset = self.get_queryset()
+        slug = self.kwargs['slug']
+        obj = Category.objects.get(name=slug)
+        return obj
+    
 
 class AddAuction(LoginRequiredMixin, CreateView):
     """This view creates new auction (prefer to create item before creating auction)"""
-    template_name = 'auctions/auction_form.html'
+    model = Auction
+    fields = ['name', 'item', 'min_price', 'buy_now_price', 'end_date']
+    
+    def get_success_url(self):
+        return '/auctions'
 
-    def get(self, request, *args, **kwargs):
-        form = AddAuctionForm(user=request.user)
-        return render(request, self.template_name, {'form': form})
+    def form_valid(self, form):
+        form.instance.seller = self.request.user
+        form.save()
+        return HttpResponseRedirect(self.get_success_url())
 
-    def post(self, request, *args, **kwargs):
-        form = AddAuctionForm(request.POST, user=request.user)
-        if form.is_valid():
-            name = form.cleaned_data['name']
-            item = form.cleaned_data['item']
-            min_price = form.cleaned_data['min_price']
-            buy_now_price = form.cleaned_data['buy_now_price']
-            end_date = form.cleaned_data['end_date']
-            user = request.user
-            if buy_now_price:
-                if min_price > buy_now_price:
-                    messages.error(request, 'Price without bidding cannot be less than minimum price')
-                    return redirect('/add-auction')
-            if end_date < timezone.now():   # Check if date is not past
-                messages.error(request, 'End date cannot be past')
-                return redirect('/add-auction')
-            else:
-                Auction.objects.create(name=name,
-                                       item=item,
-                                       min_price=min_price,
-                                       buy_now_price=buy_now_price,
-                                       end_date=end_date,
-                                       seller=user)
-                return redirect('/auctions')
-        else:
-            return render(request, self.template_name, {'form': self.form})
+    # template_name = 'auctions/auction_form.html'
+
+    # def get(self, request, *args, **kwargs):
+    #     form = AddAuctionForm(user=request.user)
+    #     return render(request, self.template_name, {'form': form})
+
+    # def post(self, request, *args, **kwargs):
+    #     form = AddAuctionForm(request.POST, user=request.user)
+    #     if form.is_valid():
+    #         name = form.cleaned_data['name']
+    #         item = form.cleaned_data['item']
+    #         min_price = form.cleaned_data['min_price']
+    #         buy_now_price = form.cleaned_data['buy_now_price']
+    #         end_date = form.cleaned_data['end_date']
+    #         user = request.user
+    #         if buy_now_price:
+    #             if min_price > buy_now_price:
+    #                 messages.error(request, 'Price without bidding cannot be less than minimum price')
+    #                 return redirect('/add-auction')
+    #         if end_date < timezone.now():   # Check if date is not past
+    #             messages.error(request, 'End date cannot be past')
+    #             return redirect('/add-auction')
+    #         else:
+    #             Auction.objects.create(name=name,
+    #                                    item=item,
+    #                                    min_price=min_price,
+    #                                    buy_now_price=buy_now_price,
+    #                                    end_date=end_date,
+    #                                    seller=user)
+    #             return redirect('/auctions')
+    #     else:
 
 
 class BuyNow(LoginRequiredMixin, View):

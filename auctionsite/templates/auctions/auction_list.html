@@ -26,7 +26,7 @@
 <div id="content", name="content", class="main">
     <div class="row justify-content-center">
         <div class="col-9">
-{% for auction in auction_list %}
+{% for auction in auctions %}
 <ul>
 <a href="/auction/{{ auction.id }}"><li>{{ auction.name }}, Status: {{ auction.status }}</li></a>
 </ul>
