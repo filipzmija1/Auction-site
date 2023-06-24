@@ -5,7 +5,7 @@ from io import BytesIO
 
 from django import forms
 from django.db import models
-from django.forms.models import modelform_factory
+from django.forms.models import BaseModelForm, modelform_factory
 from django.shortcuts import render, redirect
 from django.views.generic import View, ListView, CreateView, DeleteView, DetailView, UpdateView
 from django.contrib.auth import get_user_model, login, logout, authenticate
@@ -69,6 +69,7 @@ class AuctionsList(ListView):
     model = Auction
     context_object_name = 'auctions'
     paginate_by = 5
+    ordering = 'end_date'
 
     def get_context_data(self, **kwargs):
         """Method is used to change auction status after expired or sold"""
@@ -135,6 +136,7 @@ class AddAuction(LoginRequiredMixin, CreateView):
         min_price = form.cleaned_data['min_price']
         buy_now_price = form.cleaned_data['buy_now_price']
         end_date = form.cleaned_data['end_date']
+        
         if buy_now_price and min_price > buy_now_price:
             form.add_error('buy_now_price', 'Price without bidding cannot be less than minimum price')
             return self.form_invalid(form)
@@ -147,6 +149,7 @@ class AddAuction(LoginRequiredMixin, CreateView):
     def get_form(self, form_class=None):
         """Creates widget"""
         form = super().get_form(form_class)
+        form.fields['item'].queryset = Item.objects.filter(creator=self.request.user)
         form.fields['end_date'].help_text = mark_safe('Enter the date in the format: month/day/year hour:minutes:seconds')
         return form
 
@@ -203,59 +206,82 @@ class AddItem(LoginRequiredMixin, CreateView):
         return super().form_valid(form)
 
 
-class AddOpinion(LoginRequiredMixin, View):
+class AddOpinion(LoginRequiredMixin, CreateView):
     """View destined to add new opinions about auctions"""
-    template_name = 'auctions/opinion_form.html'
+    model = Opinion
+    context_object_name = 'opinion'
+    fields = ['comment', 'rating']
 
-    def get(self, request, *args, **kwargs):    # Handle GET request to display the opinion form
-        form = OpinionForm()
-        return render(request, self.template_name, {'form': form})
+    def get_success_url(self):
+        auction = self.get_object()
+        return reverse('auction-detail', kwargs={'pk': auction.pk})
 
-    def post(self, request, *args, **kwargs):
-        form = OpinionForm(request.POST)
-        pk = kwargs['pk']
-        auction = Auction.objects.get(pk=pk)
-        if form.is_valid():     # If form is valid create a new Opinion object and redirect to auction detail page
-            reviewer = request.user
-            comment = form.cleaned_data['comment']
-            rating = form.cleaned_data['rating']
-            Opinion.objects.create(auction=auction, reviewer=reviewer, rating=rating, comment=comment)
-            messages.success(request, 'Added opinion successfully')
-            return HttpResponseRedirect(f'/auction/{auction.id}')
-        else:   # If form is not valid render the opinion form again with the validation errors
-            return render(request, self.template_name, {'form': form})
+    def get_object(self, queryset=None):
+        """Retrieve the auction for which there is an opinion"""
+        if queryset is None:
+            queryset = self.get_queryset()
+        auction_id = self.kwargs['pk']
+        auction = Auction.objects.get(pk=auction_id)
+        return auction
+
+    def form_valid(self, form):
+        form.instance.reviewer = self.request.user
+        form.instance.auction = self.get_object()
+        return super().form_valid(form)
 
 
-class EditOpinion(LoginRequiredMixin, View):
+
+class EditOpinion(LoginRequiredMixin, UpdateView):
     """This view edits opinion"""
-    template_name = 'auctions/opinion_edit.html'
+    model = Opinion
+    fields = ['comment', 'rating']
+    
+    def get_success_url(self):
+        auction = self.object.auction
+        return reverse('auction-detail', kwargs={'pk': auction.pk})
 
-    def get(self, request, *args, **kwargs):
-        opinion_id = kwargs['pk']   # Get opinion id from the URL
+
+    def get_object(self, queryset=None):
+        opinion_id = self.kwargs['pk']
+        user = self.request.user
         opinion = Opinion.objects.get(pk=opinion_id)
-        form = EditOpinionForm(instance=opinion)
-        user = request.user
-        context = {
-            'form': form,
-            'opinion': opinion
-        }
         if opinion.reviewer.id != user.id:
             raise PermissionDenied
-        else:
-            return render(request, self.template_name, context)
+        return opinion
+    
+    def form_valid(self, form):
+        form.instance.date_edited = datetime.now()
+        form.save()
+        return super().form_valid(form)
+        
+    # template_name = 'auctions/opinion_edit.html'
 
-    def post(self, request, *args, **kwargs):
-        opinion_id = kwargs['pk']  # Get opinion id from the URL
-        opinion = Opinion.objects.get(pk=opinion_id)
-        form = EditOpinionForm(request.POST)
-        auction_id = opinion.auction.id
-        if form.is_valid():
-            opinion.rating = form.cleaned_data['rating']
-            opinion.comment = form.cleaned_data['comment']
-            opinion.date_edited = datetime.now()
-            opinion.save()
-            messages.success(request, 'Opinion changed successfully')
-            return redirect(f'/auction/{auction_id}')
+    # def get(self, request, *args, **kwargs):
+    #     opinion_id = kwargs['pk']   # Get opinion id from the URL
+    #     opinion = Opinion.objects.get(pk=opinion_id)
+    #     form = EditOpinionForm(instance=opinion)
+    #     user = request.user
+    #     context = {
+    #         'form': form,
+    #         'opinion': opinion
+    #     }
+    #     if opinion.reviewer.id != user.id:
+    #         raise PermissionDenied
+    #     else:
+    #         return render(request, self.template_name, context)
+
+    # def post(self, request, *args, **kwargs):
+    #     opinion_id = kwargs['pk']  # Get opinion id from the URL
+    #     opinion = Opinion.objects.get(pk=opinion_id)
+    #     form = EditOpinionForm(request.POST)
+    #     auction_id = opinion.auction.id
+    #     if form.is_valid():
+    #         opinion.rating = form.cleaned_data['rating']
+    #         opinion.comment = form.cleaned_data['comment']
+    #         opinion.date_edited = datetime.now()
+    #         opinion.save()
+    #         messages.success(request, 'Opinion changed successfully')
+    #         return redirect(f'/auction/{auction_id}')
 
 
 class DeleteOpinion(LoginRequiredMixin, SuccessMessageMixin, DeleteView):

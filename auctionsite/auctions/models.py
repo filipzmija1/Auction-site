@@ -74,6 +74,12 @@ class Bid(models.Model):
 
 
 class Opinion(models.Model):
+    id = models.UUIDField(
+        default=uuid.uuid4,
+        unique=True,
+        primary_key=True,
+        editable=False
+    )
     auction = models.ForeignKey(Auction, on_delete=models.CASCADE)
     reviewer = models.ForeignKey(User, on_delete=models.CASCADE)
     rating = models.PositiveIntegerField(validators=[MinValueValidator(1), MaxValueValidator(10)])

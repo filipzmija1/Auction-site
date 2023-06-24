@@ -26,7 +26,7 @@ Status: {{ auction.status }} <br><br>
 <a href="/bid-auction/{{ auction.id }}"><b>BID AUCTION</b></a> | <a href="/bids/{{ auction.id }}">BIDS HISTORY</a>
 <h2>Opinions:</h2>
 <a href="/add-opinion/{{ auction.id }}"><b>Add opinion</b></a>
-{% for opinion in opinions %}
+{% for opinion in auction.opinion_set.all %}
 <ul>
     <li>Comment: {{ opinion.comment }}</li>
     <li>Rating: {{ opinion.rating }}</li>
