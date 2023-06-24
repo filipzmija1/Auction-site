@@ -4,7 +4,7 @@ from io import BytesIO
 
 from django.forms.models import BaseModelForm
 from django.shortcuts import render, redirect
-from django.views.generic import View, ListView, CreateView, DeleteView
+from django.views.generic import View, ListView, CreateView, DeleteView, DetailView
 from django.contrib.auth import get_user_model, login, logout, authenticate
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
@@ -52,17 +52,10 @@ class ItemsList(ListView):
     paginate_by = 10
 
 
-class ItemDetails(View):
+class ItemDetails(DetailView):
     """This view shows the details of particural item"""
-    template_name = 'auctions/item_detail.html'
-
-    def get(self, request, *args, **kwargs):
-        pk = kwargs['pk']   # Get the primary key of the item from the URL
-        item = Item.objects.get(pk=pk)
-        context = {
-            'item': item,
-            }
-        return render(request, self.template_name, context)
+    model = Item
+    context_object_name = 'item'
 
 
 class AuctionsList(ListView):

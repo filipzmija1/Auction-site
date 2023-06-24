@@ -3,6 +3,8 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.core.validators import MinValueValidator, MaxValueValidator
 
+import uuid
+
 
 class Account(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
@@ -28,6 +30,12 @@ class Item(models.Model):
                             upload_to='images/')
     category = models.ForeignKey(Category, on_delete=models.CASCADE)
     creator = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
+    id = models.UUIDField(
+        default=uuid.uuid4,
+        unique=True,
+        primary_key=True,
+        editable=False
+    )
 
     def __str__(self):
         return self.name
