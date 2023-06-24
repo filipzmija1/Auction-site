@@ -9,6 +9,9 @@ Are you sure you want to buy <a href="/items/{{ auction.item.id }}">{{ auction.i
 <a href="/auction/{{ auction.id }}">{{ auction.name }}</a>? Price is {{ auction.buy_now_price }}. <br><br>
 <form action="" method="POST">
     {% csrf_token %}
+    {{ form.name.as_hidden }}
+    {{ form.status.as_hidden }}
+    {{ form.buyer.as_hidden }}
     <input type="submit" value="BUY NOW">
 </form>
 <br>

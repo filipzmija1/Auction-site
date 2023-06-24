@@ -38,7 +38,7 @@ urlpatterns = [
     path('items/', auctions.ItemsList.as_view()),
     path('items/<uuid:pk>', auctions.ItemDetails.as_view()),
     path('auctions/', auctions.AuctionsList.as_view()),
-    path('auction/<uuid:pk>/', auctions.AuctionDetails.as_view()),
+    path('auction/<uuid:pk>/', auctions.AuctionDetails.as_view(), name='auction-detail'),
     path('add-auction/', auctions.AddAuction.as_view()),
     path('add-item/', auctions.AddItem.as_view()),
     path('add-opinion/<int:pk>', auctions.AddOpinion.as_view()),
@@ -56,7 +56,7 @@ urlpatterns = [
     path('delete-opinion/<int:pk>', auctions.DeleteOpinion.as_view()),
     path('expired-auctions/', auctions.AuctionsList.as_view()),
     path('email/', include(mail_urls)),
-    path('buy-now/<int:pk>', auctions.BuyNow.as_view()),
+    path('buy-now/<uuid:pk>', auctions.BuyNow.as_view(), name='buy-now'),
     path('delete-user/<int:pk>', auctions.DeleteUser.as_view()),
     
     path('reset_password/', auth_views.PasswordResetView.as_view(

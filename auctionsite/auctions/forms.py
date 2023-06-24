@@ -1,6 +1,7 @@
 from django import forms
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
+from django.forms.models import modelform_factory
 
 from .models import Bid, Opinion, Auction, Item
 
@@ -45,15 +46,6 @@ class ResetPasswordForm(forms.Form):
     confirm_password = forms.CharField(widget=forms.PasswordInput)
 
 
-class AddAuctionForm(forms.ModelForm):
-    item = forms.ModelChoiceField(queryset=None)
-    class Meta:
-        model = Auction
-        fields = ['name', 'item', 'min_price', 'buy_now_price', 'end_date']
-    end_date = forms.DateTimeField(widget=forms.TextInput(attrs={'placeholder': '01/20/1995 15:30:00'}),
-                                    help_text='month/day/year hour:minutes:seconds')
-
-
 class EditUserForm(forms.Form):
     first_name = forms.CharField(max_length=150, required=False)
     last_name = forms.CharField(max_length=150, required=False)
@@ -75,3 +67,4 @@ class EditOpinionForm(forms.ModelForm):
     class Meta:
         model = Opinion
         fields = ['rating', 'comment']
+

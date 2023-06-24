@@ -7,7 +7,7 @@ from django import forms
 from django.db import models
 from django.forms.models import modelform_factory
 from django.shortcuts import render, redirect
-from django.views.generic import View, ListView, CreateView, DeleteView, DetailView
+from django.views.generic import View, ListView, CreateView, DeleteView, DetailView, UpdateView
 from django.contrib.auth import get_user_model, login, logout, authenticate
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
@@ -20,13 +20,14 @@ from django.core.paginator import Paginator
 from django.core.mail import send_mail
 from django.conf import settings
 from django.utils.safestring import mark_safe
+from django.urls import reverse_lazy, reverse
 
 from django_email_verification import send_email
 from twilio.rest import Client
 
 from .models import Auction, Item, Opinion, Bid, Category, Account
 from .utils import average_rating
-from .forms import BidForm, OpinionForm, SearchForm, LoginForm, AddUserForm, ResetPasswordForm, AddAuctionForm, \
+from .forms import BidForm, OpinionForm, SearchForm, LoginForm, AddUserForm, ResetPasswordForm, \
     EditUserForm, EditOpinionForm
 
 
@@ -73,13 +74,14 @@ class AuctionsList(ListView):
         """Method is used to change auction status after expired or sold"""
         context = super().get_context_data(**kwargs)    # Get default context data
         for auction in context['auctions']:
-            if auction.end_date < timezone.now() and auction.bid_set.count() > 0:
-                auction.status = 'sold'
-                auction.save()
-            elif auction.end_date < timezone.now():   # Check if end date is past
-                auction.status = 'expired'
-                auction.save()
-        return context
+            if auction.status == 'available':
+                if auction.end_date < timezone.now():   # Check if end date is past
+                    auction.status = 'expired'
+                    auction.save()   
+                if auction.end_date < timezone.now() and auction.bid_set.count() > 0:
+                    auction.status = 'sold'
+                    auction.save()      
+            return context
 
     def get_template_names(self, **kwargs):
         """Method is used to dynamically determine the template to use based on the 'status' parameter in the URL"""
@@ -113,9 +115,9 @@ class CategoryDetails(DetailView):
     def get_object(self, queryset=None):
         if queryset is None:
             queryset = self.get_queryset()
-        slug = self.kwargs['slug']
-        obj = Category.objects.get(name=slug)
-        return obj
+        category_slug = self.kwargs['slug']
+        category = Category.objects.get(name=category_slug)
+        return category
     
 
 class AddAuction(LoginRequiredMixin, CreateView):
@@ -124,9 +126,11 @@ class AddAuction(LoginRequiredMixin, CreateView):
     fields = ['name', 'item', 'min_price', 'buy_now_price', 'end_date']
 
     def get_success_url(self):
+        """Returns URL where user will be redirected after successfull object create"""
         return '/auctions'
 
     def form_valid(self, form):
+        """Check if form is valid and saves data"""
         form.instance.seller = self.request.user
         min_price = form.cleaned_data['min_price']
         buy_now_price = form.cleaned_data['buy_now_price']
@@ -134,90 +138,57 @@ class AddAuction(LoginRequiredMixin, CreateView):
         if buy_now_price and min_price > buy_now_price:
             form.add_error('buy_now_price', 'Price without bidding cannot be less than minimum price')
             return self.form_invalid(form)
-        if end_date < timezone.now():
+        if end_date < timezone.now():   # Check if date is not past
             form.add_error('end_date', 'End date cannot be past')
             return self.form_invalid(form)
         form.save()
-        return super().form_valid(form)
+        return HttpResponseRedirect(self.get_success_url())
 
     def get_form(self, form_class=None):
+        """Creates widget"""
         form = super().get_form(form_class)
-        form.fields['end_date'].help_text = mark_safe('month/day/year hour:minutes:seconds')
+        form.fields['end_date'].help_text = mark_safe('Enter the date in the format: month/day/year hour:minutes:seconds')
         return form
-    # def get_form_class(self):
-    #     class AuctionForm(forms.ModelForm):
-    #         class Meta:
-    #             model = Auction
-    #             fields = self.fields
-    #             widgets = {
-    #                  'end_date': forms.DateTimeInput(attrs={'help_text': 'month/day/year hour:minutes:seconds'})
-    #             }
-
-    # template_name = 'auctions/auction_form.html'
-
-    # def get(self, request, *args, **kwargs):
-    #     form = AddAuctionForm(user=request.user)
-    #     return render(request, self.template_name, {'form': form})
-
-    # def post(self, request, *args, **kwargs):
-    #     form = AddAuctionForm(request.POST, user=request.user)
-    #     if form.is_valid():
-    #         name = form.cleaned_data['name']
-    #         item = form.cleaned_data['item']
-    #         min_price = form.cleaned_data['min_price']
-    #         buy_now_price = form.cleaned_data['buy_now_price']
-    #         end_date = form.cleaned_data['end_date']
-    #         user = request.user
-    #         if buy_now_price:
-    #             if min_price > buy_now_price:
-    #                 messages.error(request, 'Price without bidding cannot be less than minimum price')
-    #                 return redirect('/add-auction')
-    #         if end_date < timezone.now():   # Check if date is not past
-    #             messages.error(request, 'End date cannot be past')
-    #             return redirect('/add-auction')
-    #         else:
-    #             Auction.objects.create(name=name,
-    #                                    item=item,
-    #                                    min_price=min_price,
-    #                                    buy_now_price=buy_now_price,
-    #                                    end_date=end_date,
-    #                                    seller=user)
-    #             return redirect('/auctions')
-    #     else:
 
 
-class BuyNow(LoginRequiredMixin, View):
+class BuyNow(LoginRequiredMixin, UpdateView):
     """This view is used to buy auction item without bidding (only if auction allows that)"""
+    model = Auction
+    context_object_name = 'auction'
     template_name = 'auctions/buy_auction_now.html'
+    fields = ['buyer', 'status']
 
-    def get(self, request, *args, **kwargs):
-        auction_id = kwargs['pk']
-        auction = Auction.objects.get(id=auction_id)
-        user = request.user
-        if user.id == auction.seller.id:
-            messages.error(request, 'You cannot buy your own auction')
-            return redirect(f'/auction/{auction.id}')
-        if auction.bid_set.count() > 0: # Check if someone started bidding auction
-            messages.error(request, 'You cannot buy right now because someone started to bid on auction already'
-                                    ' (you can bid too)')
-            return redirect(f'/auction/{auction.id}')
-        if auction.status == 'available':
-            if not auction.buy_now_price:
-                raise Http404('You can not do this because auction has no price without bid')
-            else:
-                return render(request, self.template_name, {'auction': auction})
-        else:
-            messages.error(request, 'Buy item from expired or sold auction is not allowed')
-            return redirect(f'/auction/{auction.id}')
+    def get_success_url(self):
+        auction = self.get_object()
+        return reverse('auction-detail', kwargs={'pk': auction.pk})
 
-    def post(self, request, *args, **kwargs):
-        auction_id = kwargs['pk']
-        auction = Auction.objects.get(id=auction_id)
-        auction.status = 'sold'
-        auction.buyer = request.user
-        auction.save()
-        messages.success(request, f'Congratulation! You bought {auction.item.name} from {auction.name}')
-        return redirect('/auctions')
+    def form_valid(self, form):
+        """Check if form is valid, display messages and saves data"""
+        user = self.request.user
+        auction = self.get_object()  # Access the auction object
+        error_messages = {
+            auction.bid_set.count() > 0: 'You cannot buy right now because someone started to bid on auction already(you can bid too)',
+            auction.status == 'available' and auction.buy_now_price is None: 'You can not do this because auction has no buy-now price',
+            auction.status == 'sold' or auction.status == 'expired': 'Buying expired or sold auctions is prohibited',
+            auction.seller == user or auction.buyer == user: 'Buying as buyer or seller is prohibited',
+        }
+        for condition, error_message in error_messages.items():
+            if condition:
+                messages.error(self.request, error_message)
+                return redirect(reverse_lazy('auction-detail', kwargs={'pk': auction.pk}))
+        form.instance.buyer = user
+        form.instance.status = 'sold'
+        auction = form.save()
+        messages.success(self.request, f'Congratulation! You bought {auction.item.name} from {auction.name}')
+        return super().form_valid(form)
+        
+    def get_object(self, queryset=None):
+        """Returns objects from the URL"""
+        if queryset is None:
+            queryset = self.get_queryset()
+        auction_id = self.kwargs['pk']
+        auction = Auction.objects.get(pk=auction_id)
+        return auction
 
 
 class AddItem(LoginRequiredMixin, CreateView):

@@ -5,7 +5,11 @@
 <h1>{{ auction.name }}</h1>
 {% if messages %}
     {% for message in messages %}
-    <b>{{ message }}</b>
+    {% if message.tags == 'success' %}
+    <span style="color : green"> <b>{{ message }}</b></span>
+    {% else %}
+   <span style="color : red"> <b>{{ message }}</b></span>
+   {% endif %}
     {% endfor %}
 <br>
 {% endif %}
