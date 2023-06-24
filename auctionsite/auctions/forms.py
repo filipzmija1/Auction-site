@@ -53,11 +53,6 @@ class AddAuctionForm(forms.ModelForm):
     end_date = forms.DateTimeField(widget=forms.TextInput(attrs={'placeholder': '01/20/1995 15:30:00'}),
                                     help_text='month/day/year hour:minutes:seconds')
 
-    def __init__(self, *args, **kwargs):
-        """This metod gets logged user and sets queryset for item field(user's items)"""
-        user = kwargs.pop('user')  # Get logged user
-        super().__init__(*args, **kwargs)
-        self.fields['item'].queryset = Item.objects.filter(creator=user)
 
 class EditUserForm(forms.Form):
     first_name = forms.CharField(max_length=150, required=False)

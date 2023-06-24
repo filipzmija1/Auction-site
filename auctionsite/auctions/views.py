@@ -1,10 +1,11 @@
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Type
 from PIL import Image
 from io import BytesIO
-from django.db import models
 
-from django.forms.models import BaseModelForm
+from django import forms
+from django.db import models
+from django.forms.models import modelform_factory
 from django.shortcuts import render, redirect
 from django.views.generic import View, ListView, CreateView, DeleteView, DetailView
 from django.contrib.auth import get_user_model, login, logout, authenticate
@@ -18,6 +19,7 @@ from django.utils import timezone
 from django.core.paginator import Paginator
 from django.core.mail import send_mail
 from django.conf import settings
+from django.utils.safestring import mark_safe
 
 from django_email_verification import send_email
 from twilio.rest import Client
@@ -120,14 +122,36 @@ class AddAuction(LoginRequiredMixin, CreateView):
     """This view creates new auction (prefer to create item before creating auction)"""
     model = Auction
     fields = ['name', 'item', 'min_price', 'buy_now_price', 'end_date']
-    
+
     def get_success_url(self):
         return '/auctions'
 
     def form_valid(self, form):
         form.instance.seller = self.request.user
+        min_price = form.cleaned_data['min_price']
+        buy_now_price = form.cleaned_data['buy_now_price']
+        end_date = form.cleaned_data['end_date']
+        if buy_now_price and min_price > buy_now_price:
+            form.add_error('buy_now_price', 'Price without bidding cannot be less than minimum price')
+            return self.form_invalid(form)
+        if end_date < timezone.now():
+            form.add_error('end_date', 'End date cannot be past')
+            return self.form_invalid(form)
         form.save()
-        return HttpResponseRedirect(self.get_success_url())
+        return super().form_valid(form)
+
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
+        form.fields['end_date'].help_text = mark_safe('month/day/year hour:minutes:seconds')
+        return form
+    # def get_form_class(self):
+    #     class AuctionForm(forms.ModelForm):
+    #         class Meta:
+    #             model = Auction
+    #             fields = self.fields
+    #             widgets = {
+    #                  'end_date': forms.DateTimeInput(attrs={'help_text': 'month/day/year hour:minutes:seconds'})
+    #             }
 
     # template_name = 'auctions/auction_form.html'
 
