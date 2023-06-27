@@ -20,7 +20,7 @@
 </div>
 </div>
 </div><br>
-{% for auction in auction_list %}
+{% for auction in auctions %}
 {% if auction.status == 'sold' %}
 <ul>
     <li><a href="/auction/{{ auction.id }}">{{ auction.name }}</a></li>
