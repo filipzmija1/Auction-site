@@ -27,8 +27,8 @@ from twilio.rest import Client
 
 from .models import Auction, Item, Opinion, Bid, Category, Account
 from .utils import average_rating
-from .forms import BidForm, OpinionForm, SearchForm, LoginForm, AddUserForm, ResetPasswordForm, \
-    EditUserForm, EditOpinionForm
+from .forms import SearchForm, LoginForm, AddUserForm, ResetPasswordForm, \
+    EditUserForm
 
 
 
@@ -294,6 +294,7 @@ class BidAuction(LoginRequiredMixin, CreateView):
         return context
     
     def form_valid(self, form):
+        """Check if form is valid, sends errors and if everything is OK sends mail to outbided person."""
         user = self.request.user
         auction = self.get_object()
         new_price = form.cleaned_data['amount']
@@ -337,80 +338,20 @@ class BidAuction(LoginRequiredMixin, CreateView):
         auction = self.get_object()
         return reverse('auction-detail', kwargs={'pk': auction.pk})
 
-# class BidAuction(LoginRequiredMixin, View):
-#     """The view destined to bid on auctions (if bid is 20 minutes before end of auction,
-#       it increases end of auction time for 20 minutes). It sends SMS and email to a person whose has been outbid """
-#     form = BidForm()
-#     context = {}
-#     template_name = 'auctions/bid_form.html'
 
-#     def get(self, request, *args, **kwargs):
-#         pk = kwargs['pk']
-#         auction = Auction.objects.get(id=pk)
-#         self.context['auction'] = auction
-#         self.context['form'] = self.form
-#         return render(request, self.template_name, self.context)
-
-#     def post(self, request, *args, **kwargs):
-#         form = BidForm(request.POST)
-#         pk = kwargs['pk']
-#         auction = Auction.objects.get(id=pk)
-#         account_sid = ''  # account sid used to send SMS
-#         auth_token = ''     # account auth_token used to send SMS
-#         client = Client(account_sid, auth_token)
-#         bidder = request.user
-#         if form.is_valid():
-#             if auction.buyer == request.user:
-#                 messages.error(request, 'You cannot bid because last person who bids is you!')
-#                 return redirect(f'/auction/{auction.id}')
-#             if auction.seller == request.user:
-#                 messages.error(request, 'You cannot bid on your own auction!')
-#                 return redirect(f'/auction/{auction.id}')
-#             if auction.status == 'expired' or auction.status == 'sold':
-#                 messages.error(request, 'Bid on expired or sold auctions is not allowed!')
-#                 return redirect(f'/auction/{auction.id}')
-#             new_price = form.cleaned_data['amount']
-            
-#             if auction.min_price >= new_price:  # Check if new price is bigger than minimum price of the auction
-#                 messages.error(request, 'New price cannot be equal or less than minimum price!')
-#                 return render(request, self.template_name, self.context)
-#             else:
-#                 if timezone.now() + timezone.timedelta(minutes=20) > auction.end_date:
-#                     auction.end_date += timezone.timedelta(minutes=20)
-#                 if auction.buyer:
-#                     outbided_account = Account.objects.get(user=auction.buyer) # Get account for send SMS
-#                     if outbided_account.phone_number:
-#                         message = client.messages.create(
-#                             body=f'Your auction: "{auction.name}" has been outbid. New price is {new_price}!',
-#                             from_='+12543544729',
-#                             to='+48{}'.format(outbided_account.phone_number)
-#                         )
-#                 send_mail(f'{auction.name}',    # Sends email to outbid person
-#                                   f'You have been outbid. New price is {new_price}',
-#                                    f'{settings.EMAIL_HOST_USER}',
-#                                    [f'{auction.buyer.email}'])  
-#                 auction.min_price = new_price
-#                 auction.buyer = bidder
-#                 auction.save()
-#                 Bid.objects.create(amount=new_price, auction=auction, bidder=bidder)
-#             messages.success(request, 'Bid successfully')  # Display success and redirect to the auction details page
-#             return redirect(f'/auction/{auction.id}')
-#         else:
-#             return render(request, self.template_name, self.context)
-
-
-class BidHistory(View):
+class BidHistory(ListView):
     """Shows every bid for auction"""
-    def get(self, request, *args, **kwargs):
-        auction_id = kwargs['pk']  # Get auction id from the URL
-        auction = Auction.objects.get(pk=auction_id)
-        bids = auction.bid_set.all().order_by('-time')
-        context = {
-            'auction': auction,
-            'bids': bids,
-        }
-        return render(request, 'auctions/bid_history_list.html', context)
+    model = Bid
+    template_name = 'auctions/bid_history_list.html'
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        auction_id = self.kwargs['pk']      # Get auction ID from the URL
+        auction = Auction.objects.get(pk=auction_id)
+        bids = auction.bid_set.order_by('-time')
+        context['auction'] = auction
+        context['bids'] = bids
+        return context
 
 class SearchAuction(View):
     """This view is destined to search auction, category or item by name"""

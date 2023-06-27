@@ -15,6 +15,7 @@ Price at the moment: {{ auction.min_price }} <br>
 End of auction: {{ auction.end_date }}<br>
 Auction buyer: {{ auction.buyer }} <br>
 Auction status: {{ auction.status }}
+<h2>History</h2>
 {% for bid in bids %}
 <ul>
     <li>{{ bid.amount }} </li>

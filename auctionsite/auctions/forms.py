@@ -9,18 +9,6 @@ from .models import Bid, Opinion, Auction, Item
 User = get_user_model()
 
 
-class BidForm(forms.ModelForm):
-    class Meta:
-        model = Bid
-        fields = ['amount']
-
-
-class OpinionForm(forms.ModelForm):
-    class Meta:
-        model = Opinion
-        fields = ['rating', 'comment']
-
-
 class SearchForm(forms.Form):
     search = forms.CharField(min_length=3, required=False)
 
@@ -62,9 +50,4 @@ class EditUserForm(forms.Form):
             raise forms.ValidationError('Phone number must have 9 numbers')
         else:
             return phone_number
-
-class EditOpinionForm(forms.ModelForm):
-    class Meta:
-        model = Opinion
-        fields = ['rating', 'comment']
 
