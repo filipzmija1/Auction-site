@@ -53,7 +53,7 @@ urlpatterns = [
     path('edit-profile/<int:pk>', auctions.EditUserProfile.as_view()),
     path('reset-password/<str:username>', auctions.ResetPassword.as_view()),
     path('bids/<int:pk>', auctions.BidHistory.as_view()),
-    path('delete-opinion/<int:pk>', auctions.DeleteOpinion.as_view()),
+    path('delete-opinion/<uuid:pk>', auctions.DeleteOpinion.as_view()),
     path('expired-auctions/', auctions.AuctionsList.as_view()),
     path('email/', include(mail_urls)),
     path('buy-now/<uuid:pk>', auctions.BuyNow.as_view(), name='buy-now'),

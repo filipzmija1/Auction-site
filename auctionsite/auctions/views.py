@@ -253,35 +253,6 @@ class EditOpinion(LoginRequiredMixin, UpdateView):
         form.instance.date_edited = datetime.now()
         form.save()
         return super().form_valid(form)
-        
-    # template_name = 'auctions/opinion_edit.html'
-
-    # def get(self, request, *args, **kwargs):
-    #     opinion_id = kwargs['pk']   # Get opinion id from the URL
-    #     opinion = Opinion.objects.get(pk=opinion_id)
-    #     form = EditOpinionForm(instance=opinion)
-    #     user = request.user
-    #     context = {
-    #         'form': form,
-    #         'opinion': opinion
-    #     }
-    #     if opinion.reviewer.id != user.id:
-    #         raise PermissionDenied
-    #     else:
-    #         return render(request, self.template_name, context)
-
-    # def post(self, request, *args, **kwargs):
-    #     opinion_id = kwargs['pk']  # Get opinion id from the URL
-    #     opinion = Opinion.objects.get(pk=opinion_id)
-    #     form = EditOpinionForm(request.POST)
-    #     auction_id = opinion.auction.id
-    #     if form.is_valid():
-    #         opinion.rating = form.cleaned_data['rating']
-    #         opinion.comment = form.cleaned_data['comment']
-    #         opinion.date_edited = datetime.now()
-    #         opinion.save()
-    #         messages.success(request, 'Opinion changed successfully')
-    #         return redirect(f'/auction/{auction_id}')
 
 
 class DeleteOpinion(LoginRequiredMixin, SuccessMessageMixin, DeleteView):
@@ -289,16 +260,20 @@ class DeleteOpinion(LoginRequiredMixin, SuccessMessageMixin, DeleteView):
     model = Opinion
     success_message = 'Opinion deleted successfully'
 
+    def get_object(self, queryset=None):
+        opinion_id = self.kwargs['pk']  # Get opinion id from the URL
+        user = self.request.user    # Get logged user
+        opinion = Opinion.objects.get(pk=opinion_id)
+        if opinion.reviewer.id != user.id:
+            raise PermissionDenied
+        return opinion
+
     def get_success_url(self):
         """This method get the success URL from opinion id"""
-        user = self.request.user    # Get logged user
         opinion_id = self.kwargs.get('pk')  # Get opinion id from the URL
         opinion = Opinion.objects.get(id=opinion_id)
         auction = opinion.auction
-        if user.id != opinion.reviewer.id:
-            raise PermissionDenied
-        else:
-            return f'/auction/{auction.id}'
+        return f'/auction/{auction.id}'
 
 
 class BidAuction(LoginRequiredMixin, View):

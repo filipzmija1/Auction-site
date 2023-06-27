@@ -35,7 +35,10 @@ Status: {{ auction.status }} <br><br>
     {% if opinion.date_edited %}
     <li>Date edited: {{ opinion.date_edited }}</li>
     {% endif %}
+    {% if user.id == opinion.reviewer.id %}
     <li><a href="/edit-opinion/{{ opinion.id }}">Edit opinion</a></li>
+    <li><a href='/delete-opinion/{{ opinion.id }}'>Delete opinion</a></li>
+    {% endif %}
 </ul>
 {% endfor %}
 <div class="pagination">
