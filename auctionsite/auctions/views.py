@@ -3,8 +3,6 @@ from typing import Any, Dict, Optional, Type
 from PIL import Image
 from io import BytesIO
 
-from django import forms
-from django.db import models
 from django.forms.models import BaseModelForm, modelform_factory
 from django.shortcuts import render, redirect
 from django.views.generic import View, ListView, CreateView, DeleteView, DetailView, UpdateView
@@ -14,7 +12,7 @@ from django.contrib import messages
 from django.core.exceptions import PermissionDenied
 from django.contrib.messages.views import SuccessMessageMixin
 from django.http import HttpResponse, HttpResponseRedirect, Http404
-from django.db.models import Q
+from django.db.models import Q, Avg
 from django.utils import timezone
 from django.core.paginator import Paginator
 from django.core.mail import send_mail
@@ -27,8 +25,7 @@ from twilio.rest import Client
 
 from .models import Auction, Item, Opinion, Bid, Category, Account
 from .utils import average_rating
-from .forms import SearchForm, LoginForm, AddUserForm, ResetPasswordForm, \
-    EditUserForm
+from .forms import SearchForm, ResetPasswordForm, EditUserForm
 
 
 
@@ -101,6 +98,14 @@ class AuctionDetails(DetailView):
     """This view shows the details (includes opinions) of particural auction"""
     context_object_name = 'auction'
     model = Auction
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        auction = self.object
+        opinions = Opinion.objects.filter(auction=auction)
+        average_rating = opinions.aggregate(Avg('rating'))['rating__avg']
+        context['average_rating'] = average_rating
+        return context
 
 
 class CategoriesList(ListView):
@@ -472,11 +477,11 @@ class DeleteUser(LoginRequiredMixin, SuccessMessageMixin, DeleteView):
     model = User
     success_message = 'Your account has been deleted successfully'
     template_name = 'auctions/user_confirm_delete.html'
-    
-    def get_success_url(self):
+    success_url = '/home'
+        
+    def get_object(self, queryset=None):
+        user_id = self.kwargs['pk']  # Get user id from the URL
         user = self.request.user    # Get logged user
-        user_id = self.kwargs.get('pk') # Get user id from the URL
-        if user.id != user_id:
+        if user_id != user.id:
             raise PermissionDenied
-        else:
-            return '/home'
+        return user

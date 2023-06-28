@@ -20,7 +20,7 @@
             <a href="/user/{{ user.username }}">{{ user.username }}</a> |
         {% else %}
             <a href="{% url 'account_login' %}">Login</a> |
-            <a href="/accounts/signup">Create account</a> |
+            <a href="{% url 'account_signup' %}">Create account</a> |
         {% endif %}
 </nav>
 </div>
