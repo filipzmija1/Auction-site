@@ -383,79 +383,6 @@ class SearchAuction(View):
             return render(request, self.template_name, {'form': form})
 
 
-class Login(View):
-    template_name = 'auctions/login_form.html'
-
-    def get(self, request, *args, **kwargs):
-        form = LoginForm()
-        return render(request, self.template_name, {'form': form})
-
-    def post(self, request, *args, **kwargs):
-        form = LoginForm(request.POST)
-        if form.is_valid():
-            username = form.cleaned_data['username']
-            password = form.cleaned_data['password']
-            user = authenticate(username=username, password=password)
-            next_url = request.GET.get('next')  # Get next page from URL
-            if user:    # If user is authenticated log in and redirect to home page
-                login(request, user)
-                if next_url:
-                    return redirect(next_url)
-                else:
-                    return redirect(f'/user/{user.username}')
-            else:
-                form.add_error(None, 'Invalid username or password')
-                return render(request, self.template_name, {'form': form})
-        else:
-            return render(request, self.template_name, {'form': form})
-
-
-class Logout(View):
-    def get(self, request, *args, **kwargs):
-        logout(request)
-        return redirect('/home')
-
-
-class AddUser(View):
-    """View that creates new user and login after valid form"""
-    form = AddUserForm()
-    template_name = 'auctions/add_user_form.html'
-
-    def get(self, request, *args, **kwargs):
-        return render(request, self.template_name, {'form': self.form})
-
-    def post(self, request, *args, **kwargs):
-        form = AddUserForm(request.POST)
-        users = User.objects.all()  # Retrieve all users data
-        usernames = []
-        emails = []
-        for user in users:  # Getting usernames and emails
-            usernames.append(user.username)
-            emails.append(user.email)
-        if form.is_valid():
-            username = form.cleaned_data['username']
-            confirm_password = form.cleaned_data['confirm_password']
-            password = form.cleaned_data['password']
-            email = form.cleaned_data['email']
-            if username in usernames:   # Check if username already exists
-                form.add_error(None, 'User already exists')
-            elif password != confirm_password:
-                form.add_error(None, 'Passwords do not match')
-            elif email in emails:   # Check if email already exists
-                form.add_error(None, 'Email is already in used')
-            else:
-                user = User.objects.create_user(
-                    username=username,
-                    password=password,
-                    email=email)
-                user.is_active = False
-                Account.objects.create(user=user)
-                send_email(user)    # Send email to verify account
-                messages.success(request, 'Check email to enable your account')
-                return redirect('/home')
-        return render(request, self.template_name, {'form': form})
-
-
 class UserProfile(View):
     """This view shows user data (if user is created by all-auth library it creates extra account fields)"""
     def get(self, request, *args, **kwargs):
@@ -477,6 +404,7 @@ class UserProfile(View):
             user_account = Account.objects.create(user=user)
             context['user_account'] = user_account
             return render(request, 'auctions/user_profile.html', context)
+
 
 class EditUserProfile(LoginRequiredMixin, SuccessMessageMixin, View):
     """This view edits user profile"""

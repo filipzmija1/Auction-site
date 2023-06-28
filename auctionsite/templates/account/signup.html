@@ -2,6 +2,8 @@
 {% block title %} New account {% endblock %}
 
 {% block content %}
+<h1>Register</h1>
+<p>Already have an account?  <a href="{{ login_url }}">Login</a></p>
 <form action="" method="POST">
     {% csrf_token %}
     {{ form.as_p }}
